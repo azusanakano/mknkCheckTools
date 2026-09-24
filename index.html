@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>mknk チェックツール v1.2.3</title>
+<style>
+:root{color-scheme:light;--ink:#182d3e;--muted:#60707d;--line:#d9e1e5;--blue:#155ec1;--green:#087e71}
+*{box-sizing:border-box}
+body{margin:0;background:#f5f7f6;color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;line-height:1.65}
+a{color:inherit}svg{display:block}button,a{-webkit-tap-highlight-color:transparent}
+.shell{width:min(1040px,100%);margin:auto;padding:32px 28px 24px}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}.brand-mark{display:grid;place-items:center;width:45px;height:45px;border-radius:12px;background:var(--ink);color:white;font-size:12px;font-weight:800;letter-spacing:-.4px}
+.brand-name{font-size:14px;font-weight:700;letter-spacing:.04em}.product-id{font-size:11px;color:var(--muted);letter-spacing:.06em}
+.offline{display:flex;align-items:center;gap:7px;font-size:12px;color:#41645b;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:#388774}
+.intro{padding:34px 0 27px}.eyebrow{margin:0 0 4px;color:var(--muted);font-size:11px;letter-spacing:.14em;font-weight:700}
+h1{margin:0 0 8px;font-size:clamp(28px,4.5vw,38px);letter-spacing:.025em;line-height:1.4}.lead{margin:0;font-size:14px;color:var(--muted)}
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.tool{display:flex;flex-direction:column;min-width:0;padding:27px 28px 23px;border:1px solid var(--line);border-radius:17px;background:white;text-decoration:none;box-shadow:0 3px 10px #172d3d04;transition:border-color .15s,box-shadow .15s}
+.tool:hover{border-color:var(--tone);box-shadow:0 6px 22px #172d3d0c}.tool:focus-visible{outline:3px solid var(--tone);outline-offset:4px}
+.lcd{--tone:var(--blue);--wash:#edf4ff}.keyboard{--tone:var(--green);--wash:#eaf7f2}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.icon{display:grid;place-items:center;width:60px;height:60px;background:var(--wash);border-radius:15px;color:var(--tone)}
+.number{color:#8996a0;font-size:12px;letter-spacing:.08em}h2{margin:0;font-size:24px;line-height:1.5}.english{margin:3px 0 14px;color:var(--tone);font-size:10px;letter-spacing:.12em;font-weight:700}
+.description{margin:0 0 18px;font-size:14px;color:var(--muted)}.features{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 24px;padding:0;list-style:none}.features li{padding:3px 10px;border-radius:5px;background:#f4f6f7;color:#4b5d6b;font-size:12px}
+.launch{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:16px;border-top:1px solid #e7edef;color:var(--tone);font-size:14px;font-weight:700}.launch svg{width:19px;height:19px}
+.guide{margin-top:22px;padding:17px 20px;display:flex;gap:20px;border:1px solid var(--line);border-radius:11px;background:#f0f3f2;font-size:12px;color:var(--muted)}.guide strong{flex-shrink:0;color:#354c5b}.guide p{margin:0}
+.audio-panel{margin-top:22px;padding:24px 28px;border:1px solid var(--line);border-radius:17px;background:#fff}
+.audio-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}.audio-heading h2{font-size:23px}.audio-badge{padding:4px 10px;border-radius:6px;background:#f0effc;color:#5a4890;font-size:12px;font-weight:700}
+.audio-intro{margin:0 0 14px;font-size:13px;color:var(--muted)}audio{display:block;width:100%;margin:12px 0}
+.audio-controls{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 10px}.audio-controls button{padding:9px 13px;border:1px solid #c8c0dc;border-radius:8px;color:#4b3d75;background:#f6f4fc;font:inherit;font-size:13px;cursor:pointer}
+.audio-controls button:hover{background:#ebe7f7}.audio-controls button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.audio-controls button.secondary{border-color:var(--line);color:var(--muted);background:#fff}
+.audio-state{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:10px 0;font-size:13px}.audio-clock{font-variant-numeric:tabular-nums;color:var(--muted)}
+.audio-note{margin:8px 0 0;font-size:12px;color:var(--muted)}#audioStatus[data-error="true"]{color:#a52c28}.audio-download{font-size:13px;color:var(--blue)}
+.audio-sources{margin-top:14px;font-size:12px;color:var(--muted)}.audio-sources summary{cursor:pointer}.audio-sources a{color:var(--blue)}.audio-sources p{margin:8px 0 0}
+@media(max-width:620px){.audio-panel{padding:20px}.audio-controls button{flex:1 1 43%}.audio-heading h2{font-size:21px}}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:22px;font-size:11px;color:#788791}.version{font-variant-numeric:tabular-nums}
+@media(max-width:620px){.shell{padding:21px 18px}.masthead{gap:10px}.brand-name{font-size:12px}.offline{font-size:10px}.intro{padding:27px 0 22px}.tools{grid-template-columns:1fr;gap:16px}.tool{padding:22px}.card-head{margin-bottom:15px}.guide{flex-direction:column;gap:5px}.features{margin-bottom:18px}.brand-mark{width:38px;height:38px}.lead{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.tool{transition:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">mknk</span><div><div class="brand-name">ネコシステム社</div><div class="product-id">mknkCheckTools</div></div></div>
+    <span class="offline"><span class="dot" aria-hidden="true"></span>オフライン対応</span>
+  </header>
+  <main>
+    <div class="intro"><p class="eyebrow">PC CHECK TOOLS</p><h1>チェックツール</h1><p class="lead">液晶・キーボード・スピーカーを、ひとつのメニューから確認できます。</p></div>
+    <div class="tools">
+      <a class="tool lcd" href="tools/mknk-lcd-tester.html" aria-labelledby="lcd-title lcd-launch">
+        <div class="card-head"><span class="icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect x="4" y="6" width="28" height="20" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 31h10M18 26v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 10h6v12H8z" fill="currentColor" opacity=".18"/><path d="M15 10h6v12h-6z" fill="currentColor" opacity=".4"/><path d="M22 10h6v12h-6z" fill="currentColor" opacity=".75"/></svg></span><span class="number" aria-hidden="true">01 / LCD</span></div>
+        <h2 id="lcd-title">液晶チェック</h2><p class="english">LCD TESTER</p><p class="description">単色やシマシマを画面いっぱいに表示して、液晶の見え方を確認します。</p>
+        <ul class="features"><li>8つの表示モード</li><li>全画面表示</li><li>自動切替</li></ul>
+        <span class="launch"><span id="lcd-launch">液晶チェックを開く</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="tool keyboard" href="tools/keyboard_event_inspector_local.html" aria-labelledby="keyboard-title keyboard-launch">
+        <div class="card-head"><span class="icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect x="3" y="8" width="30" height="21" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 14h1m5 0h1m5 0h1m5 0h1M8 19h1m5 0h1m5 0h1m5 0h1M11 24h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="number" aria-hidden="true">02 / KEYBOARD</span></div>
+        <h2 id="keyboard-title">キーボードチェック</h2><p class="english">KEYBOARD EVENT INSPECTOR</p><p class="description">入力文字、キーコード、Fnの通知を確認し、イベントログを保存できます。</p>
+        <ul class="features"><li>入力テスト</li><li>Fn通知・比較</li><li>ログ保存</li></ul>
+        <span class="launch"><span id="keyboard-launch">キーボードチェックを開く</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+    </div>
+    <section class="audio-panel" aria-labelledby="audio-title">
+      <div class="audio-heading"><h2 id="audio-title">スピーカーテスト</h2><span class="audio-badge">左・右・中央 · 約18秒</span></div>
+      <p class="audio-intro">左 → 右 → 中央の順にテスト音声を再生します。中央は左右から音が出ます。音源は倍速処理済みです。</p>
+      <audio id="speakerAudio" controls controlslist="noplaybackrate" preload="metadata" aria-label="左・右・中央のスピーカーテスト音源" src="media/TEST_TONE_left_right_center_2x.mp3">このブラウザーでは音声を再生できません。</audio>
+      <div class="audio-state"><strong id="audioSection">待機中</strong><span id="audioClock" class="audio-clock">0:00 / 0:18</span></div>
+      <div class="audio-controls" aria-label="音源の再生位置">
+        <button type="button" data-audio-start="0">① 左から再生</button>
+        <button type="button" data-audio-start="5.5">② 右から再生</button>
+        <button type="button" data-audio-start="11">③ 中央から再生</button>
+        <button type="button" id="audioStop" class="secondary">停止して先頭へ</button>
+      </div>
+      <p id="audioStatus" class="audio-note" role="status">再生ボタンを押すと音声が流れます。プレーヤーの初期音量は100%です。</p>
+      <p class="audio-note"><a class="audio-download" href="media/TEST_TONE_left_right_center_2x.mp3" download="TEST_TONE_left_right_center_2x.mp3">MP3を保存</a> · 320kbps / 48kHz / ステレオ</p>
+      <p class="audio-note"><a class="audio-download" href="media/TEST_TONE_left_right_center_2x.wav" download="TEST_TONE_left_right_center_2x.wav">WAVを保存</a> · MP3から変換 / 48kHz / 16bit / ステレオ</p>
+      <details class="audio-sources"><summary>音源について</summary><p>TEST_TONE_left_right_center_2x(1).mp3 を使用しています。MP3の音声データは変更せず、倍速処理済みの音源をそのままの速さで再生します。初期音量は100%です。</p><p>WAVは同じMP3を変換したものです。音源の内容・音質はMP3に由来します。</p></details>
+    </section>
+    <aside class="guide" aria-label="使い方"><strong>使い方</strong><p>各ツールの「メニューへ戻る」で、この画面に戻れます。<br>液晶チェックは F キーで全画面、H キーで操作パネルの表示を切り替えられます。</p></aside>
+  </main>
+  <footer><span>インストール不要 · インターネット接続不要</span><span class="version">mknkCheckTools v1.2.3</span></footer>
+</div>
+<script>
+(() => {
+  "use strict";
+  const player = document.getElementById("speakerAudio");
+  const status = document.getElementById("audioStatus");
+  const section = document.getElementById("audioSection");
+  const clock = document.getElementById("audioClock");
+  const chapters = [
+    {start:0, title:"左チャンネル / Left"},
+    {start:5.5, title:"右チャンネル / Right"},
+    {start:11, title:"中央 / Center（左右から再生）"}
+  ];
+  const expectedDuration = 17.980979166666668;
+  let playRequest = 0;
+  player.volume = 1;
+  player.defaultPlaybackRate = 1;
+  const timeText = seconds => {
+    const total = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2,"0")}`;
+  };
+  const update = () => {
+    const duration = Number.isFinite(player.duration) ? player.duration : expectedDuration;
+    clock.textContent = `${timeText(player.ended ? Math.round(duration) : player.currentTime)} / ${timeText(Math.round(duration))}`;
+    const active = [...chapters].reverse().find(chapter => player.currentTime >= chapter.start) || chapters[0];
+    section.textContent = player.ended ? "再生終了" : player.paused && player.currentTime === 0 ? "待機中" : active.title + (player.paused ? "（一時停止）" : "");
+  };
+  const playAt = async start => {
+    const request = ++playRequest;
+    try {
+      player.currentTime = start;
+      player.playbackRate = 1;
+      await player.play();
+      if (request !== playRequest || player.paused) return;
+      delete status.dataset.error;
+      status.textContent = "再生中です。音量はプレーヤーと端末で調整できます。";
+      update();
+    } catch (error) {
+      if (request !== playRequest || error.name === "AbortError") return;
+      status.dataset.error = "true";
+      status.textContent = "再生できませんでした。ZIPをすべて展開し、音量と音声ファイルの配置を確認してください。";
+    }
+  };
+  document.querySelectorAll("[data-audio-start]").forEach(button => {
+    button.addEventListener("click", () => playAt(Number(button.dataset.audioStart)));
+  });
+  document.getElementById("audioStop").addEventListener("click", () => {
+    ++playRequest;
+    player.pause();
+    player.currentTime = 0;
+    update();
+  });
+  for (const event of ["loadedmetadata", "timeupdate", "pause", "play", "ended", "seeked"]) {
+    player.addEventListener(event, update);
+  }
+  player.addEventListener("pause", () => {
+    if (!player.error) status.textContent = player.ended ? "再生が終了しました。" : "停止・一時停止中です。";
+  });
+  player.addEventListener("play", () => {
+    delete status.dataset.error;
+    status.textContent = "再生中です。音量はプレーヤーと端末で調整できます。";
+  });
+  player.addEventListener("ratechange", () => {
+    if (player.playbackRate !== 1) status.textContent = "再生速度が変更されています。この音源は倍速処理済みです。そのままの速さで確認するには1倍速へ戻してください。";
+  });
+  player.addEventListener("error", () => {
+    status.dataset.error = "true";
+    status.textContent = "音声を読み込めません。mediaフォルダーを含め、ZIPをすべて展開してください。";
+  });
+})();
+</script>
+</body>
+</html>

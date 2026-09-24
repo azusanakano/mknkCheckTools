@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>液晶チェック | mknk LCD Tester | mknkCheckTools v1.2.0</title>
+<style>
+:root{--ui-bg:rgba(10,16,28,.88);--ui-line:rgba(255,255,255,.22);--ui-text:#fff;--accent:#6fc2ff}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;
+ font-family:"Meiryo UI","Yu Gothic UI",Meiryo,sans-serif}
+body{user-select:none}
+#stage{position:fixed;inset:0;background:#000;cursor:pointer}
+#stage.mura{
+ background:
+ radial-gradient(circle at 12% 20%,rgba(255,255,255,.10),transparent 24%),
+ radial-gradient(circle at 82% 25%,rgba(0,0,0,.11),transparent 28%),
+ radial-gradient(circle at 55% 82%,rgba(255,255,255,.07),transparent 25%),
+ #7f7f7f;
+}
+#stage.stripes{
+ background:repeating-linear-gradient(0deg,#444 0 4px,#333 4px 8px);
+}
+#stage.yellowing{
+ background:
+ radial-gradient(ellipse at 50% 48%,rgba(255,240,150,.55) 0 17%,rgba(255,246,193,.28) 32%,transparent 62%),
+ linear-gradient(90deg,#fff 0 20%,#f7f4e8 20% 40%,#fffbe6 40% 60%,#f3f3f3 60% 80%,#fff 80%);
+}
+.ui{position:fixed;z-index:10;color:var(--ui-text);background:var(--ui-bg);border:1px solid var(--ui-line);
+ backdrop-filter:blur(5px);border-radius:10px}
+#hud{left:12px;top:12px;padding:9px 12px;min-width:230px;cursor:pointer}
+#hud strong{display:block;font-size:16px}
+#hud span{font-size:11px;opacity:.78}
+#toolbar{right:12px;top:12px;padding:7px;display:flex;gap:6px;flex-wrap:wrap;max-width:min(620px,calc(100vw - 24px))}
+button{border:1px solid var(--ui-line);background:rgba(255,255,255,.08);color:#fff;border-radius:7px;
+ padding:7px 10px;font:inherit;cursor:pointer}
+button:hover,button.active{border-color:#fff;background:rgba(255,255,255,.22)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#help{left:12px;bottom:12px;padding:10px 12px;max-width:min(680px,calc(100vw - 24px));font-size:12px;line-height:1.55;cursor:pointer}
+#help b{color:#bde4ff}
+#centerLabel{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;color:rgba(0,0,0,.48);
+ font-weight:700;font-size:clamp(24px,5vw,72px);text-shadow:0 1px rgba(255,255,255,.35)}
+.hidden-ui #hud,.hidden-ui #toolbar,.hidden-ui #help{display:none}
+@media(max-width:700px){#toolbar{top:auto;bottom:12px;left:12px;right:12px;max-width:none}#help{bottom:76px;font-size:11px}}
+
+/* Package navigation. It hides with the existing toolbar during inspection. */
+.package-menu{display:inline-flex;align-items:center;text-decoration:none;border:1px solid var(--ui-line);background:rgba(255,255,255,.08);color:#fff;border-radius:7px;padding:7px 10px;font:inherit;cursor:pointer}
+.package-menu:hover{border-color:#fff;background:rgba(255,255,255,.22)}
+.package-menu:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#hud{max-width:calc(100vw - 24px);min-width:0}
+#hud span{display:block;line-height:1.4;overflow-wrap:anywhere}
+@media(min-width:701px) and (max-width:1160px){#toolbar{top:96px}}
+@media(max-width:700px){#toolbar{top:96px;bottom:auto}#help{bottom:12px}}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="液晶画面検査領域"></div>
+<div id="centerLabel"></div>
+
+<div id="hud" class="ui" title="クリックでUIを隠す">
+  <strong id="modeName">黒 / BLACK</strong>
+  <span id="resolution">解像度を取得中</span>
+</div>
+
+<div id="toolbar" class="ui" aria-label="検査モード">
+  <button data-index="0" type="button">1 黒</button>
+  <button data-index="1" type="button">2 白</button>
+  <button data-index="2" type="button">3 赤</button>
+  <button data-index="3" type="button">4 緑</button>
+  <button data-index="4" type="button">5 青</button>
+  <button data-index="5" type="button">6 黄変</button>
+  <button data-index="6" type="button">M ムラ</button>
+  <button data-index="7" type="button">S シマシマ</button>
+  <button id="autoBtn" type="button">A 自動</button>
+  <button id="fullBtn" type="button">F 全画面</button>
+  <a class="package-menu" href="../index.html">← メニューへ戻る</a>
+</div>
+
+<div id="help" class="ui" title="クリックで次の色へ">
+  <b>操作:</b>
+  クリック / ← → / Space＝切替　
+  1～6＝直接選択　
+  M＝ムラ確認　
+  S＝シマシマ確認　
+  A＝自動切替　
+  H＝UI表示切替　
+  <b>F＝全画面切替</b>　
+  Esc＝全画面解除
+</div>
+
+<script>
+"use strict";
+
+const modes = [
+  {name:"黒 / BLACK", color:"#000000", label:""},
+  {name:"白 / WHITE", color:"#ffffff", label:""},
+  {name:"赤 / RED", color:"#ff0000", label:""},
+  {name:"緑 / GREEN", color:"#00ff00", label:""},
+  {name:"青 / BLUE", color:"#0000ff", label:""},
+  {name:"黄変チェック / YELLOWING", cls:"yellowing", label:"黄変・色温度差を確認"},
+  {name:"ムラ確認 / MURA", cls:"mura", label:"輝度ムラ・圧迫痕を確認"},
+  {name:"シマシマ確認 / STRIPES", cls:"stripes", label:"濃淡グレーの縞を確認"}
+];
+
+let index = 0;
+let autoTimer = null;
+const stage = document.getElementById("stage");
+const modeName = document.getElementById("modeName");
+const centerLabel = document.getElementById("centerLabel");
+const autoBtn = document.getElementById("autoBtn");
+const fullBtn = document.getElementById("fullBtn");
+
+function applyMode(next){
+  index = (next + modes.length) % modes.length;
+  const mode = modes[index];
+  stage.className = "";
+  stage.style.background = "";
+  if(mode.cls) stage.classList.add(mode.cls);
+  else stage.style.background = mode.color;
+  modeName.textContent = mode.name;
+  centerLabel.textContent = mode.label || "";
+  document.querySelectorAll("[data-index]").forEach(btn=>{
+    btn.classList.toggle("active", Number(btn.dataset.index) === index);
+  });
+}
+
+function step(delta=1){ applyMode(index + delta); }
+
+function toggleUI(){
+  document.body.classList.toggle("hidden-ui");
+}
+
+function toggleAuto(){
+  if(autoTimer){
+    clearInterval(autoTimer);
+    autoTimer = null;
+    autoBtn.classList.remove("active");
+    autoBtn.textContent = "A 自動";
+  }else{
+    autoTimer = setInterval(()=>step(1),1800);
+    autoBtn.classList.add("active");
+    autoBtn.textContent = "A 停止";
+  }
+}
+
+function updateResolution(){
+  const ratio = window.devicePixelRatio || 1;
+  const css = `${window.innerWidth} × ${window.innerHeight} CSS px`;
+  const physical = `${Math.round(window.innerWidth*ratio)} × ${Math.round(window.innerHeight*ratio)} 推定px`;
+  document.getElementById("resolution").textContent = `${css} / ${physical} / DPR ${ratio}`;
+}
+
+async function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch{
+    alert("全画面表示を開始できませんでした。F11を利用してください。");
+  }
+}
+
+stage.addEventListener("click",()=>step(1));
+document.getElementById("help").addEventListener("click",e=>{e.stopPropagation();step(1)});
+document.getElementById("hud").addEventListener("click",e=>{e.stopPropagation();toggleUI()});
+document.querySelectorAll("[data-index]").forEach(btn=>btn.addEventListener("click",e=>{
+  e.stopPropagation(); applyMode(Number(btn.dataset.index));
+}));
+autoBtn.addEventListener("click",e=>{e.stopPropagation();toggleAuto()});
+fullBtn.addEventListener("click",e=>{
+  e.stopPropagation();
+  toggleFullscreen();
+});
+
+window.addEventListener("keydown",e=>{
+  if(e.target instanceof Element && e.target.closest(".package-menu")) return;
+  const k = e.key.toLowerCase();
+  if(k === "arrowright" || k === " " || k === "enter"){
+    e.preventDefault(); step(1);
+  }else if(k === "arrowleft"){
+    e.preventDefault(); step(-1);
+  }else if(/^[1-6]$/.test(k)){
+    applyMode(Number(k)-1);
+  }else if(k === "m"){
+    applyMode(6);
+  }else if(k === "s"){
+    applyMode(7);
+  }else if(k === "a"){
+    toggleAuto();
+  }else if(k === "h"){
+    toggleUI();
+  }else if(k === "f"){
+    e.preventDefault();
+    toggleFullscreen();
+  }else if(k === "escape" && autoTimer){
+    toggleAuto();
+  }
+});
+
+window.addEventListener("resize",updateResolution);
+document.addEventListener("fullscreenchange",()=>{
+  fullBtn.classList.toggle("active", Boolean(document.fullscreenElement));
+  fullBtn.textContent = document.fullscreenElement ? "F 全画面解除" : "F 全画面";
+  updateResolution();
+});
+applyMode(0);
+updateResolution();
+</script>
+</body>
+</html>

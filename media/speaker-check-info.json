@@ -1,0 +1,67 @@
+{
+  "package_version": "1.2.3",
+  "source": {
+    "filename": "TEST_TONE_left_right_center_2x(1).mp3",
+    "sha256": "87844bd317c140da30c645ae33829c0dded1b9387c329e23e12a87f3a1f30ef0",
+    "size_bytes": 722009
+  },
+  "mp3": {
+    "filename": "TEST_TONE_left_right_center_2x.mp3",
+    "sha256": "87844bd317c140da30c645ae33829c0dded1b9387c329e23e12a87f3a1f30ef0",
+    "size_bytes": 722009,
+    "copied_byte_for_byte": true,
+    "sample_rate_hz": 48000,
+    "channels": 2,
+    "bitrate_kbps": 320,
+    "container_duration_seconds": 18.024,
+    "decoded_duration_seconds": 17.980979166666668,
+    "decoded_frame_count": 863087
+  },
+  "player": {
+    "playback_rate": 1,
+    "initial_volume": 1,
+    "source_already_processed_to_double_speed": true,
+    "autoplay": false
+  },
+  "chapters": [
+    {
+      "label": "Left",
+      "seek_seconds": 0,
+      "display_until_seconds": 5.5,
+      "rms_per_channel_dbfs": [
+        -21.494901458343655,
+        -94.74261867591738
+      ]
+    },
+    {
+      "label": "Right",
+      "seek_seconds": 5.5,
+      "display_until_seconds": 11,
+      "rms_per_channel_dbfs": [
+        -94.29133085772249,
+        -21.256550505602398
+      ]
+    },
+    {
+      "label": "Center",
+      "seek_seconds": 11,
+      "display_until_seconds": 17.980979166666668,
+      "rms_per_channel_dbfs": [
+        -31.41068524434477,
+        -31.74862941814059
+      ]
+    }
+  ],
+  "chapter_note": "再生ボタン用の目安位置。左右の音量を確認し、右・中央の発音前の静かな移行部分を選んだものです。元の編集境界を断定する値ではありません。",
+  "center_note": "中央区間は左右に音声がありますが、左右の波形は完全には一致しません。添付音源の左右構成を保持しています。",
+  "wav": {
+    "filename": "TEST_TONE_left_right_center_2x.wav",
+    "sha256": "301f18c7f23616c1114b753553cc8521b81e215f4793cb8d2be30d3f05a6608e",
+    "size_bytes": 3452468,
+    "sample_rate_hz": 48000,
+    "channels": 2,
+    "bits_per_sample": 16,
+    "derived_from": "TEST_TONE_left_right_center_2x.mp3",
+    "processing": "MP3をPCM 16-bitへ復号。再サンプリング・音量調整・速度変更なし。MP3に由来する音質です。"
+  }
+}

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>キーボードチェック | mknkCheckTools v1.2.0</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --border: #dee2e6;
+      --muted: #6c757d;
+      --light: #f8f9fa;
+      --primary: #0d6efd;
+      --danger: #dc3545;
+      --success: #198754;
+      --secondary: #6c757d;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #212529;
+      background: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    button, textarea, input { font: inherit; }
+    .container {
+      width: 100%;
+      max-width: 1320px;
+      margin-inline: auto;
+      padding-inline: 0.75rem;
+    }
+    .py-4 { padding-block: 1.5rem; }
+    .d-flex { display: flex; }
+    .flex-column { flex-direction: column; }
+    .justify-content-between { justify-content: space-between; }
+    .align-items-center { align-items: center; }
+    .align-items-stretch { align-items: stretch; }
+    .gap-3 { gap: 1rem; }
+    .mb-0 { margin-bottom: 0; }
+    .mb-3 { margin-bottom: 1rem; }
+    .mb-4 { margin-bottom: 1.5rem; }
+    .m-0 { margin: 0; }
+    .p-0 { padding: 0 !important; }
+    .h-100 { height: 100%; }
+    .h3 { margin-top: 0; font-size: 1.75rem; font-weight: 500; line-height: 1.2; }
+    .text-muted { color: var(--muted); }
+    .fw-semibold { font-weight: 600; }
+    .text-nowrap { white-space: nowrap; }
+    .form-label { display: inline-block; margin-bottom: 0.5rem; }
+    .form-control {
+      display: block;
+      width: 100%;
+      padding: 0.375rem 0.75rem;
+      color: #212529;
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+    .form-control:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
+    }
+    .form-check {
+      position: relative;
+      display: block;
+      min-height: 1.5rem;
+      padding-left: 2.5em;
+    }
+    .form-check-input {
+      appearance: none;
+      float: left;
+      width: 2em;
+      height: 1em;
+      margin: 0.25em 0 0 -2.5em;
+      background-color: #fff;
+      background-image: radial-gradient(circle at 25% 50%, #fff 0 31%, transparent 34%);
+      background-repeat: no-repeat;
+      border: 1px solid rgb(0 0 0 / 25%);
+      border-radius: 2em;
+      cursor: pointer;
+      transition: background-position 0.15s ease-in-out, background-color 0.15s ease-in-out;
+    }
+    .form-check-input:not(:checked) { background-color: #adb5bd; }
+    .form-check-input:checked {
+      background-color: var(--primary);
+      background-image: radial-gradient(circle at 75% 50%, #fff 0 31%, transparent 34%);
+      border-color: var(--primary);
+    }
+    .form-check-input:focus { outline: 3px solid rgb(13 110 253 / 25%); }
+    .form-check-label { cursor: pointer; }
+    .badge {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      color: #fff;
+      font-size: 0.75em;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: 0.375rem;
+    }
+    .bg-danger { background-color: var(--danger); }
+    .bg-success { background-color: var(--success); }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+    .g-4 { gap: 1.5rem; }
+    .col-lg-5, .col-lg-7 { min-width: 0; }
+    .card {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      min-height: 100%;
+      flex-direction: column;
+      background: #fff;
+      border: 1px solid rgb(0 0 0 / 17.5%);
+      border-radius: 0.375rem;
+    }
+    .shadow-sm { box-shadow: 0 0.125rem 0.25rem rgb(0 0 0 / 7.5%); }
+    .card-header {
+      padding: 0.5rem 1rem;
+      background: rgb(33 37 41 / 3%);
+      border-bottom: 1px solid rgb(0 0 0 / 17.5%);
+      border-radius: 0.375rem 0.375rem 0 0;
+    }
+    .card-body { flex: 1 1 auto; padding: 1rem; }
+    .table-responsive { overflow-x: auto; }
+    .table {
+      width: 100%;
+      color: #212529;
+      border-collapse: collapse;
+    }
+    .table th, .table td {
+      padding: 0.5rem;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid var(--border);
+    }
+    .table-light th { background: var(--light); }
+    .btn-group { display: inline-flex; vertical-align: middle; }
+    .btn {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      color: #212529;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      text-align: center;
+      cursor: pointer;
+    }
+    .btn-outline-secondary { color: var(--secondary); border-color: var(--secondary); }
+    .btn-outline-secondary:hover, .btn-outline-secondary:focus-visible {
+      color: #fff;
+      background: var(--secondary);
+    }
+    .btn-group > .btn:not(:first-child) {
+      margin-left: -1px;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .btn-group > .btn:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .border-0 { border: 0 !important; }
+    #logContainer {
+      display: block;
+      min-height: 340px;
+      white-space: pre;
+      border-radius: 0 0 0.375rem 0.375rem;
+    }
+    @media (max-width: 991.98px) {
+      .row { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 575.98px) {
+      header { align-items: flex-start !important; flex-direction: column; gap: 0.25rem; }
+      .h3 { font-size: 1.5rem; }
+    }
+
+    /* Package navigation stays outside the keyboard test controls. */
+    .package-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;font-size:.8rem;color:#657583}
+    .package-nav a{display:inline-flex;align-items:center;min-height:36px;padding:.35rem .7rem;border:1px solid #ced9e1;border-radius:7px;color:#244d71;text-decoration:none;background:#f7f9fb}
+    .package-nav a:hover{background:#eaf1f8;border-color:#91aac0}
+    .package-nav a:focus-visible{outline:3px solid #0d6efd;outline-offset:3px}
+    .fn-panel{margin-bottom:1rem;padding:.75rem 1rem;border:1px solid #cbdedb;border-radius:9px;background:#f6fbfa;font-size:.8rem}
+    .fn-strip{display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr) minmax(0,2.5fr);gap:1rem}
+    .fn-item{min-width:0}.fn-item strong{margin-right:.5rem}.fn-indicator{display:inline-block;padding:.12rem .45rem;border-radius:5px;background:#e4e9ec;color:#4b5f6c;font-size:.75rem}
+    .fn-indicator[data-seen="true"]{background:#087c63;color:#fff}
+    .fn-detail{display:block;margin-top:.2rem;font-size:.72rem;color:#526b70;overflow-wrap:anywhere}
+    .fn-note{margin:.55rem 0 0;color:#526b70;font-size:.72rem}
+    .fn-panel details{margin-top:.45rem}.fn-panel summary{width:fit-content;cursor:pointer;color:#175d58;font-weight:600}
+    .fn-controls{display:flex;flex-wrap:wrap;gap:.5rem;margin:.7rem 0}.fn-controls button{min-height:34px;background:#fff;color:#22544f;border-color:#7aada5}
+    .fn-controls button:disabled{opacity:.5;cursor:default}.fn-controls button:focus-visible,.fn-panel summary:focus-visible{outline:3px solid #0d6efd;outline-offset:3px}
+    .fn-comparison{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.3rem .8rem;margin:.5rem 0}.fn-comparison dt{font-weight:600}.fn-comparison dd{margin:0;overflow-wrap:anywhere}
+    #compareMessage{margin:.4rem 0;font-weight:600;color:#22544f}.fn-rows td{font-size:.8rem}
+    @media(max-width:650px){.fn-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.fn-item:last-child{grid-column:1/-1}}
+  </style>
+</head>
+<body class="container py-4">
+  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.0</span></nav>
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">キーボードチェック</h1>
+    <span class="text-muted">v20260915-fn1</span>
+  </header>
+
+  <div class="mb-3">
+    <label for="inputArea" class="form-label fw-semibold">入力テストエリア</label>
+    <textarea id="inputArea" class="form-control" rows="4" placeholder="ここに試し打ちします…"></textarea>
+  </div>
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" id="allowAll">
+      <label class="form-check-label" for="allowAll">フィルタ切替</label>
+    </div>
+    <span id="filterStatus" class="badge bg-danger">ブロック中</span>
+  </div>
+
+  <section class="fn-panel" aria-label="Fnキーの通知">
+    <div class="fn-strip">
+      <div class="fn-item"><strong>Fn</strong><span id="fnStatus" class="fn-indicator">未検出</span><span id="fnEvidence" class="fn-detail">直接・状態通知 0件</span></div>
+      <div class="fn-item"><strong>FnLock</strong><span id="fnLockStatus" class="fn-indicator">未検出</span><span id="fnLockEvidence" class="fn-detail">直接・状態通知 0件</span></div>
+      <div class="fn-item"><strong>直近の特殊キー</strong><span id="fnOutput">通知待ち</span><span id="fnOutputDetail" class="fn-detail">音量・明るさ・Fキーなど、届いたイベントを表示</span></div>
+    </div>
+    <p class="fn-note">Fn単体の通知が届かない機器もあります。「未検出」や状態の「通知なし」だけでは、未押下・未対応・故障を区別できません。</p>
+    <details id="fnCompareDetails">
+      <summary>Fnなし／ありの入力を比較</summary>
+      <p class="fn-note">同じ物理キーを①Fnなし、②Fnを押しながら、各1回押してください。各ボタンから10秒間、次の入力を記録します。Fn本体などの修飾キーは比較対象から除きます。</p>
+      <div class="fn-controls">
+        <button id="captureNormal" class="btn" type="button">① 通常入力を記録</button>
+        <button id="captureFn" class="btn" type="button" disabled>② Fn入力を記録</button>
+        <button id="cancelCapture" class="btn" type="button" disabled>記録を中止</button>
+        <button id="resetFn" class="btn" type="button">Fn表示をリセット</button>
+      </div>
+      <dl class="fn-comparison"><dt>① 通常</dt><dd id="normalSample">未記録</dd><dt>② Fnあり</dt><dd id="fnSample">未記録</dd></dl>
+      <p id="compareMessage" role="status">①から記録してください。</p>
+      <p class="fn-note">Fキー・音量キーなどの受信だけではFn押下と断定しません。比較は実際に通知されたkey / codeの差を調べます。作成された疑似イベントはログに残し、Fnの検出実績・比較には含めません。</p>
+    </details>
+  </section>
+
+  <div class="row g-4 align-items-stretch">
+    <!-- イベントテーブル -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header fw-semibold">Event Properties</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered mb-0">
+              <thead class="table-light text-nowrap">
+                <tr><th>Property</th><th>keydown</th><th>keypress</th><th>keyup</th></tr>
+              </thead>
+              <tbody>
+                <tr><th>key</th>       <td id="downKey">—</td><td id="pressKey">—</td><td id="upKey">—</td></tr>
+                <tr><th>code</th>      <td id="downCode">—</td><td id="pressCode">—</td><td id="upCode">—</td></tr>
+                <tr><th>target</th>    <td id="targetCell" colspan="3">—</td></tr>
+                <tr><th>character</th> <td id="charCell" colspan="3">—</td></tr>
+                <tr><th>shiftKey</th>  <td id="downShift">—</td><td id="pressShift">—</td><td id="upShift">—</td></tr>
+                <tr><th>ctrlKey</th>   <td id="downCtrl">—</td><td id="pressCtrl">—</td><td id="upCtrl">—</td></tr>
+                <tr><th>altKey</th>    <td id="downAlt">—</td><td id="pressAlt">—</td><td id="upAlt">—</td></tr>
+                <tr><th>metaKey</th>   <td id="downMeta">—</td><td id="pressMeta">—</td><td id="upMeta">—</td></tr>
+                <tr class="fn-rows"><th title="getModifierState('Fn')。通知なしは、未押下と未対応を区別できません。">Fn 状態</th><td id="downFn">—</td><td id="pressFn">—</td><td id="upFn">—</td></tr>
+                <tr class="fn-rows"><th title="getModifierState('FnLock')。キー通知だけではロック状態は確定しません。">FnLock 状態</th><td id="downFnLock">—</td><td id="pressFnLock">—</td><td id="upFnLock">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- イベントログ -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+          <span>Event Log</span>
+          <div class="btn-group btn-group-sm" role="group">
+            <button id="clearLog" class="btn btn-outline-secondary">クリア</button>
+            <button id="downloadLog" class="btn btn-outline-secondary">ダウンロード</button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <textarea id="logContainer" class="form-control border-0 h-100" rows="17" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pure event interpretation: no device-support inference from false values. -->
+  <script id="fn-logic">
+  const FnDiagnostics = (() => {
+    "use strict";
+    const normalize = value => String(value ?? "").toLowerCase().replace(/[\s_-]/g, "");
+    const modifierState = (event, name) => {
+      try {
+        if (typeof event.getModifierState !== "function") return null;
+        const value = event.getModifierState(name);
+        return typeof value === "boolean" ? value : null;
+      } catch { return null; }
+    };
+    const isNamed = (event, name) => [event.key, event.code].some(value => normalize(value) === normalize(name));
+    const specialNames = {
+      AudioVolumeUp:"音量＋", AudioVolumeDown:"音量－", AudioVolumeMute:"ミュート",
+      VolumeUp:"音量＋", VolumeDown:"音量－", VolumeMute:"ミュート",
+      BrightnessUp:"明るさ＋", BrightnessDown:"明るさ－", Dimmer:"明るさ切替",
+      MediaPlayPause:"再生 / 一時停止", MediaPlay:"再生", MediaPause:"一時停止", MediaStop:"停止",
+      MediaTrackNext:"次の曲", MediaTrackPrevious:"前の曲", MediaFastForward:"早送り", MediaRewind:"巻き戻し",
+      LaunchMail:"メール", LaunchApp1:"アプリ1", LaunchApp2:"アプリ2", MediaSelect:"メディア",
+      DisplayToggleIntExt:"画面出力切替", KeyboardBrightnessUp:"キー照明＋", KeyboardBrightnessDown:"キー照明－",
+      KeyboardBacklightToggle:"キー照明切替", MicrophoneToggle:"マイク切替", AudioMicMute:"マイクミュート",
+      Power:"電源", PowerOff:"電源", Sleep:"スリープ", Standby:"待機", WakeUp:"復帰", Eject:"取り出し",
+      PrintScreen:"PrintScreen", Pause:"Pause", ScrollLock:"ScrollLock", NumLock:"NumLock",
+      Home:"Home", End:"End", PageUp:"PageUp", PageDown:"PageDown", Insert:"Insert", Delete:"Delete",
+      ArrowUp:"↑", ArrowDown:"↓", ArrowLeft:"←", ArrowRight:"→"
+    };
+    const specialLabel = (key, code) => {
+      for (const name of [key, code]) {
+        if (Object.prototype.hasOwnProperty.call(specialNames, name)) return specialNames[name];
+        if (/^F[1-9]\d*$/.test(name)) return name;
+        if (/^(Audio|Media|Brightness|KeyboardBrightness|Browser|Launch|DisplayToggle)/.test(name)) return name;
+      }
+      return "";
+    };
+    const read = event => ({
+      type: event.type, key: String(event.key ?? ""), code: String(event.code ?? ""),
+      fn: modifierState(event, "Fn"), fnLock: modifierState(event, "FnLock"),
+      directFn: isNamed(event, "Fn"), directFnLock: isNamed(event, "FnLock"),
+      location: event.location ?? 0, repeat: Boolean(event.repeat), trusted: event.isTrusted === true,
+      keyCode: event.keyCode ?? 0, which: event.which ?? 0,
+      shift: Boolean(event.shiftKey), ctrl: Boolean(event.ctrlKey), alt: Boolean(event.altKey), meta: Boolean(event.metaKey),
+      special: specialLabel(String(event.key ?? ""), String(event.code ?? ""))
+    });
+    const evidence = (sample, kind) => sample.trusted && (kind === "fn"
+      ? sample.directFn || sample.fn === true
+      : sample.directFnLock || sample.fnLock === true);
+    const modifierText = value => value === true ? "ON" : value === false ? "通知なし" : "取得不可";
+    const modifierRaw = value => value === null ? "unavailable" : String(value);
+    const isModifier = sample => sample.directFn || sample.directFnLock || /^(Fn|FnLock|Shift|Control|Alt|AltGraph|Meta|OS|Hyper|Super|Symbol)$/i.test(sample.key)
+      || /^(Fn|FnLock|ShiftLeft|ShiftRight|ControlLeft|ControlRight|AltLeft|AltRight|MetaLeft|MetaRight)$/i.test(sample.code);
+    const compare = (normal, fn) => {
+      if (!normal || !fn) return {kind:"waiting", text:normal ? "②のボタンから、同じキーをFnと一緒に押してください。" : "①から記録してください。"};
+      if (normal.timeout || fn.timeout) return {kind:"unknown", text:"記録期間内に対象キーの通知がない回があります。Fnの反応・故障は判定できません。"};
+      if (!normal.trusted || !fn.trusted) return {kind:"unknown", text:"疑似イベントから機器のFn対応は判断できません。"};
+      if (fn.fn === true) return {kind:"confirmed", text:"②の入力でFn状態のON通知を受信しました。"};
+      if (normal.key !== fn.key || normal.code !== fn.code || normal.location !== fn.location)
+        return {kind:"changed", text:"送信されたkey / code / 位置に変化があります（Fn単体の直接検出とは別）。"};
+      return {kind:"same", text:"受信したkey / code / 位置は同じです。Fnの押下自体は、この比較だけでは判定できません。"};
+    };
+    return {read, evidence, modifierText, modifierRaw, isModifier, compare};
+  })();
+  </script>
+
+  <!-- Main script -->
+  <script>
+  (() => {
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+
+    // DOM elements
+    const allowAll      = $("allowAll");
+    const filterStatus  = $("filterStatus");
+    const logContainer  = $("logContainer");
+
+    // badge updater
+    const updateBadge = () => {
+      const active = !allowAll.checked;
+      filterStatus.textContent = active ? "ブロック中" : "ブロック解除";
+      filterStatus.classList.toggle("bg-danger", active);
+      filterStatus.classList.toggle("bg-success", !active);
+    };
+    updateBadge();
+    allowAll.addEventListener("change", updateBadge);
+
+    // table cells list
+    const cells = [
+      "downKey","pressKey","upKey","downCode","pressCode","upCode","targetCell","charCell",
+      "downShift","pressShift","upShift","downCtrl","pressCtrl","upCtrl","downAlt","pressAlt","upAlt",
+      "downMeta","pressMeta","upMeta",
+      "downFn","pressFn","upFn","downFnLock","pressFnLock","upFnLock"
+    ];
+    const clearCells = () => cells.forEach(id => $(id).textContent = "—");
+
+    // Allow when filter is active: any single printable char (incl. symbols), or modifier keys.
+    const isAllowed = (e) => {
+      if (allowAll.checked) return true;
+      if (typeof e.key === "string" && e.key.length === 1) return true; // letter/number/symbol
+      if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return true;
+      return false;
+    };
+
+    // PrintScreen is reported differently depending on the browser/keyboard driver.
+    // keyCode 44 must only be accepted on keydown/keyup because a comma keypress
+    // can also have the character code 44.
+    const normalizeKeyName = (value) => String(value ?? "")
+      .toLowerCase()
+      .replace(/[\s_-]/g, "");
+    const printScreenNames = new Set([
+      "printscreen", "snapshot", "prtsc", "prtscr", "prtscn"
+    ]);
+    const isPrintScreen = (e) => {
+      const key  = normalizeKeyName(e.key);
+      const code = normalizeKeyName(e.code);
+      const keyIdentifier = normalizeKeyName(e.keyIdentifier);
+      const legacyCode = Number(e.keyCode || e.which || 0);
+      const legacyPrintScreen =
+        (e.type === "keydown" || e.type === "keyup") && legacyCode === 44;
+
+      return printScreenNames.has(key) ||
+        printScreenNames.has(code) ||
+        printScreenNames.has(keyIdentifier) ||
+        legacyPrintScreen;
+    };
+
+    // Special blocked keys (when filter active)
+    const isSpecialBlocked = (e) => {
+      if (allowAll.checked) return false;
+      const k = e.key || "";
+      const c = e.code || "";
+      // PrintScreen variants + KanaMode + Convert
+      return (
+        isPrintScreen(e) ||
+        k === "KanaMode"   || c === "KanaMode"   ||
+        k === "Convert"    || c === "Convert"
+      );
+    };
+
+    const blockSpecialEvent = (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      evt.stopImmediatePropagation();
+      // Legacy fallback for older browser event implementations.
+      evt.returnValue = false;
+      evt.cancelBubble = true;
+    };
+
+    // log helpers
+    let count = 0;
+    const prependLog = (text) => {
+      const EOL = "\r\n"; // Windows-friendly newline
+      logContainer.value = [text, logContainer.value].filter(Boolean).join(EOL);
+    };
+    const updateRow = (phase, evt, sample) => {
+      $(`${phase}Key`).textContent   = evt.key ?? "";
+      $(`${phase}Code`).textContent  = evt.code ?? "";
+      $(`${phase}Shift`).textContent = evt.shiftKey;
+      $(`${phase}Ctrl`).textContent  = evt.ctrlKey;
+      $(`${phase}Alt`).textContent   = evt.altKey;
+      $(`${phase}Meta`).textContent  = evt.metaKey;
+      $(`${phase}Fn`).textContent = FnDiagnostics.modifierText(sample.fn);
+      $(`${phase}FnLock`).textContent = FnDiagnostics.modifierText(sample.fnLock);
+    };
+    const showTarget = (evt) => $("targetCell").textContent = evt.target?.nodeName ?? "";
+    const showChar   = (evt) => $("charCell").textContent   = (evt.key && evt.key.length === 1) ? evt.key : "—";
+    const log = (type, sample) => prependLog(
+      `${type} (${count++}): key=${JSON.stringify(sample.key)} code=${JSON.stringify(sample.code)} Fn=${FnDiagnostics.modifierRaw(sample.fn)} FnLock=${FnDiagnostics.modifierRaw(sample.fnLock)}` +
+      ` location=${sample.location} repeat=${sample.repeat} keyCode=${sample.keyCode} which=${sample.which}` +
+      ` shift=${sample.shift} ctrl=${sample.ctrl} alt=${sample.alt} meta=${sample.meta} isTrusted=${sample.trusted}`);
+
+    // Only actual browser-dispatched events establish a detection history.
+    const totals = {fn:0, fnLock:0};
+    const observeFn = sample => {
+      for (const kind of ["fn", "fnLock"]) {
+        if (!FnDiagnostics.evidence(sample, kind)) continue;
+        totals[kind] += 1;
+        $(`${kind}Status`).textContent = "受信済み";
+        $(`${kind}Status`).dataset.seen = "true";
+        const direct = kind === "fn" ? sample.directFn : sample.directFnLock;
+        const detail = direct ? `${sample.type} キー通知` : "ON状態通知";
+        $(`${kind}Evidence`).textContent = `${detail} / ${totals[kind]}件`;
+      }
+      if (sample.trusted && sample.special) {
+        $("fnOutput").textContent = sample.special;
+        $("fnOutputDetail").textContent = `${sample.type}: key=${sample.key} / code=${sample.code || "（空）"} — Fn経由かは別判定`;
+      }
+    };
+
+    let armed = null;
+    let captureTimer = null;
+    const pressedKeys = new Set();
+    let preCaptureKeys = new Set();
+    const keyIdentity = event => String(event.code || event.key || event.keyCode || "unknown");
+    const samples = {normal:null, fn:null};
+    const refreshCaptureButtons = () => {
+      $("captureNormal").disabled = armed !== null;
+      $("captureFn").disabled = armed !== null || samples.normal === null;
+      $("cancelCapture").disabled = armed === null;
+    };
+    const stopCapture = () => {
+      if (captureTimer !== null) clearTimeout(captureTimer);
+      captureTimer = null;
+      armed = null;
+      refreshCaptureButtons();
+    };
+    const updateComparison = () => {
+      const result = FnDiagnostics.compare(samples.normal, samples.fn);
+      $("compareMessage").textContent = result.text;
+      $("compareMessage").dataset.result = result.kind;
+    };
+    const sampleText = sample => sample?.timeout ? "10秒間、対象キーの通知なし"
+      : sample ? `key=${JSON.stringify(sample.key)} / code=${JSON.stringify(sample.code)} / Fn=${FnDiagnostics.modifierRaw(sample.fn)} / FnLock=${FnDiagnostics.modifierRaw(sample.fnLock)} (${sample.type})` : "未記録";
+    const armCapture = kind => {
+      stopCapture();
+      if (kind === "normal") {
+        samples.normal = null;
+        samples.fn = null;
+        $("normalSample").textContent = "未記録";
+        $("fnSample").textContent = "未記録";
+      } else {
+        samples.fn = null;
+        $("fnSample").textContent = "未記録";
+      }
+      armed = kind;
+      preCaptureKeys = new Set(pressedKeys);
+      refreshCaptureButtons();
+      $("compareMessage").textContent = kind === "normal" ? "記録待ち（10秒）：Fnなしで対象キーを1回押してください。" : "記録待ち（10秒）：Fnを押しながら、同じキーを1回押してください。";
+      $("compareMessage").dataset.result = "waiting";
+      $("inputArea").focus({preventScroll:true});
+      captureTimer = setTimeout(() => {
+        samples[kind] = {timeout:true};
+        $(kind === "normal" ? "normalSample" : "fnSample").textContent = sampleText(samples[kind]);
+        stopCapture();
+        updateComparison();
+      }, 10000);
+    };
+    const recordComparison = (evt, sample) => {
+      if (!armed || !sample.trusted || sample.repeat || evt.isComposing || FnDiagnostics.isModifier(sample)) return;
+      const identity = keyIdentity(evt);
+      // Do not record the release of Enter used to activate the capture button,
+      // or the release of any other key already down before recording began.
+      if (sample.type === "keyup" && preCaptureKeys.delete(identity)) return;
+      if (sample.type === "keydown") preCaptureKeys.delete(identity);
+      // Some keys (notably PrintScreen) may only deliver keyup.
+      if (sample.type !== "keydown" && sample.type !== "keyup") return;
+      const kind = armed;
+      samples[kind] = sample;
+      $(kind === "normal" ? "normalSample" : "fnSample").textContent = sampleText(sample);
+      prependLog(`[Fn比較 ${kind === "normal" ? "通常" : "Fnあり（手動指定）"}] ${sampleText(sample)}`);
+      stopCapture();
+      updateComparison();
+    };
+    $("captureNormal").addEventListener("click", () => armCapture("normal"));
+    $("captureFn").addEventListener("click", () => armCapture("fn"));
+    $("cancelCapture").addEventListener("click", () => {
+      stopCapture();
+      $("compareMessage").textContent = "記録を中止しました。もう一度ボタンから記録できます。";
+      $("compareMessage").dataset.result = "cancelled";
+    });
+    $("resetFn").addEventListener("click", () => {
+      stopCapture();
+      samples.normal = null;
+      samples.fn = null;
+      for (const kind of ["fn", "fnLock"]) {
+        totals[kind] = 0;
+        $(`${kind}Status`).textContent = "未検出";
+        delete $(`${kind}Status`).dataset.seen;
+        $(`${kind}Evidence`).textContent = "直接・状態通知 0件";
+      }
+      $("normalSample").textContent = "未記録";
+      $("fnSample").textContent = "未記録";
+      $("fnOutput").textContent = "通知待ち";
+      $("fnOutputDetail").textContent = "音量・明るさ・Fキーなど、届いたイベントを表示";
+      refreshCaptureButtons();
+      updateComparison();
+    });
+    const cancelOnFocusLoss = () => {
+      pressedKeys.clear();
+      preCaptureKeys.clear();
+      if (!armed) return;
+      stopCapture();
+      $("compareMessage").textContent = "ページのフォーカスが外れたため記録を中止しました。戻って再度記録してください。";
+      $("compareMessage").dataset.result = "cancelled";
+    };
+    window.addEventListener("blur", cancelOnFocusLoss);
+    window.addEventListener("pagehide", cancelOnFocusLoss);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) cancelOnFocusLoss(); });
+    const isControlNavigation = evt => evt.target instanceof Element && (
+      Boolean(evt.target.closest(".package-nav")) ||
+      ["Tab", "Enter", " "].includes(evt.key) && Boolean(evt.target.closest("button, summary, input[type=checkbox]"))
+    );
+
+    // Capture at window level so PrintScreen is handled before page listeners.
+    const captureOptions = { capture: true, passive: false };
+    window.addEventListener("keydown", (evt) => {
+      if (evt.isTrusted) pressedKeys.add(keyIdentity(evt));
+      if(isControlNavigation(evt)) return;
+      const sample = FnDiagnostics.read(evt);
+      clearCells();
+      updateRow("down", evt, sample);
+      showTarget(evt);
+      log("keydown", sample);
+      observeFn(sample);
+      recordComparison(evt, sample);
+      if (isSpecialBlocked(evt)) { blockSpecialEvent(evt); return; }
+      if (!isAllowed(evt)) evt.preventDefault();
+    }, captureOptions);
+    window.addEventListener("keypress", (evt) => {
+      if(isControlNavigation(evt)) return;
+      const sample = FnDiagnostics.read(evt);
+      updateRow("press", evt, sample);
+      showTarget(evt);
+      showChar(evt);
+      log("keypress", sample);
+      observeFn(sample);
+      if (isSpecialBlocked(evt)) { blockSpecialEvent(evt); return; }
+      if (!isAllowed(evt)) evt.preventDefault();
+    }, captureOptions);
+    window.addEventListener("keyup", (evt) => {
+      if (evt.isTrusted) pressedKeys.delete(keyIdentity(evt));
+      if(isControlNavigation(evt)) return;
+      const sample = FnDiagnostics.read(evt);
+      updateRow("up", evt, sample);
+      showTarget(evt);
+      log("keyup", sample);
+      observeFn(sample);
+      recordComparison(evt, sample);
+      if (isSpecialBlocked(evt)) { blockSpecialEvent(evt); return; }
+      if (!isAllowed(evt)) evt.preventDefault();
+    }, captureOptions);
+
+    // buttons
+    $("clearLog").addEventListener("click", () => { logContainer.value = ""; count = 0; });
+    $("downloadLog").addEventListener("click", () => {
+      // normalize EOLs to CRLF for downloaded file
+      const eol = "\r\n";
+      const fnSummary = `# mknkCheckTools v1.2.0 / Keyboard v20260915-fn1\n# Fn=${totals.fn}件 / FnLock=${totals.fnLock}件\n# Fn=false はON通知なし。未押下と未対応の区別は不可。\n# Fn比較 通常: ${sampleText(samples.normal)}\n# Fn比較 Fnあり（手動指定）: ${sampleText(samples.fn)}\n`;
+      const data = (fnSummary + (logContainer.value || "")).replace(/\r?\n/g, eol);
+      const blob = new Blob(["\uFEFF", data], { type: "text/plain;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = `keylog_${Date.now()}.txt`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+
+    console.assert($("inputArea") instanceof HTMLElement, "[TEST] inputArea exists");
+  })();
+  </script>
+</body>
+</html>

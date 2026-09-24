@@ -1,0 +1,14 @@
+﻿Package: mknkCheckTools
+Display name: mknk チェックツール
+Brand: ネコシステム社
+Version: 1.2.3
+Release date: 2026-09-18
+LCD source: v20260828-local-stripes
+Keyboard source: v20260821-local1
+Keyboard edition: v20260915-fn1
+Type: Offline HTML package
+Entry point: index.html
+Audio edition: TEST_TONE_left_right_center_2x
+Audio: MP3 48000 Hz 320 kbps stereo; PCM WAV 48000 Hz 16-bit stereo decoded from MP3 / approx. 18 seconds
+Audio source: User-supplied TEST_TONE_left_right_center_2x(1).mp3
+Change: Play uploaded MP3 unchanged from index.html; update chapter positions; preserve existing LCD and keyboard tools
