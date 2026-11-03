@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>液晶チェック | mknk LCD Tester | mknkCheckTools v1.2.0</title>
+<title>液晶チェック | mknk LCD Tester | mknkCheckTools v1.2.4</title>
 <style>
 :root{--ui-bg:rgba(10,16,28,.88);--ui-line:rgba(255,255,255,.22);--ui-text:#fff;--accent:#6fc2ff}
 *{box-sizing:border-box}
@@ -175,6 +175,7 @@ fullBtn.addEventListener("click",e=>{
 window.addEventListener("keydown",e=>{
   if(e.target instanceof Element && e.target.closest(".package-menu")) return;
   const k = e.key.toLowerCase();
+  if((k === "enter" || k === " ") && e.target instanceof Element && e.target.closest("button")) return;
   if(k === "arrowright" || k === " " || k === "enter"){
     e.preventDefault(); step(1);
   }else if(k === "arrowleft"){

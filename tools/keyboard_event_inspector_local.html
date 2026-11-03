@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>キーボードチェック | mknkCheckTools v1.2.0</title>
+  <title>キーボードチェック | mknkCheckTools v1.2.4</title>
   <style>
     :root {
       color-scheme: light;
@@ -192,6 +192,7 @@
     .fn-strip{display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr) minmax(0,2.5fr);gap:1rem}
     .fn-item{min-width:0}.fn-item strong{margin-right:.5rem}.fn-indicator{display:inline-block;padding:.12rem .45rem;border-radius:5px;background:#e4e9ec;color:#4b5f6c;font-size:.75rem}
     .fn-indicator[data-seen="true"]{background:#087c63;color:#fff}
+    .fn-indicator[data-comparison="changed"]{background:#fff0c2;color:#755300}
     .fn-detail{display:block;margin-top:.2rem;font-size:.72rem;color:#526b70;overflow-wrap:anywhere}
     .fn-note{margin:.55rem 0 0;color:#526b70;font-size:.72rem}
     .fn-panel details{margin-top:.45rem}.fn-panel summary{width:fit-content;cursor:pointer;color:#175d58;font-weight:600}
@@ -203,10 +204,10 @@
   </style>
 </head>
 <body class="container py-4">
-  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.0</span></nav>
+  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.4</span></nav>
   <header class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">キーボードチェック</h1>
-    <span class="text-muted">v20260915-fn1</span>
+    <span class="text-muted">v20261103-fn2</span>
   </header>
 
   <div class="mb-3">
@@ -216,20 +217,20 @@
 
   <div class="d-flex align-items-center gap-3 mb-4">
     <div class="form-check form-switch m-0">
-      <input class="form-check-input" type="checkbox" id="allowAll">
-      <label class="form-check-label" for="allowAll">フィルタ切替</label>
+      <input class="form-check-input" type="checkbox" role="switch" id="blockSpecialKeys" checked>
+      <label class="form-check-label" for="blockSpecialKeys">特殊キーをブロック</label>
     </div>
     <span id="filterStatus" class="badge bg-danger">ブロック中</span>
   </div>
 
   <section class="fn-panel" aria-label="Fnキーの通知">
     <div class="fn-strip">
-      <div class="fn-item"><strong>Fn</strong><span id="fnStatus" class="fn-indicator">未検出</span><span id="fnEvidence" class="fn-detail">直接・状態通知 0件</span></div>
-      <div class="fn-item"><strong>FnLock</strong><span id="fnLockStatus" class="fn-indicator">未検出</span><span id="fnLockEvidence" class="fn-detail">直接・状態通知 0件</span></div>
+      <div class="fn-item"><strong>Fn</strong><span id="fnStatus" class="fn-indicator" role="status">直接通知待ち</span><span id="fnEvidence" class="fn-detail">直接・状態通知 0件</span></div>
+      <div class="fn-item"><strong>FnLock</strong><span id="fnLockStatus" class="fn-indicator">直接通知待ち</span><span id="fnLockEvidence" class="fn-detail">直接・状態通知 0件</span></div>
       <div class="fn-item"><strong>直近の特殊キー</strong><span id="fnOutput">通知待ち</span><span id="fnOutputDetail" class="fn-detail">音量・明るさ・Fキーなど、届いたイベントを表示</span></div>
     </div>
-    <p class="fn-note">Fn単体の通知が届かない機器もあります。「未検出」や状態の「通知なし」だけでは、未押下・未対応・故障を区別できません。</p>
-    <details id="fnCompareDetails">
+    <p class="fn-note">Fn / FnLockは通常、キーボード本体で処理され、単体の通知がブラウザーに届きません。届かない通知をHTML側から取得することはできません。Fn＋別のキーを下の比較で確認してください。「直接通知待ち」や状態の「通知なし」だけでは故障と判断できません。</p>
+    <details id="fnCompareDetails" open>
       <summary>Fnなし／ありの入力を比較</summary>
       <p class="fn-note">同じ物理キーを①Fnなし、②Fnを押しながら、各1回押してください。各ボタンから10秒間、次の入力を記録します。Fn本体などの修飾キーは比較対象から除きます。</p>
       <div class="fn-controls">
@@ -284,7 +285,7 @@
           </div>
         </div>
         <div class="card-body p-0">
-          <textarea id="logContainer" class="form-control border-0 h-100" rows="17" spellcheck="false"></textarea>
+          <textarea id="logContainer" class="form-control border-0 h-100" rows="17" spellcheck="false" readonly aria-label="イベントログ"></textarea>
         </div>
       </div>
     </div>
@@ -361,19 +362,19 @@
     const $ = (id) => document.getElementById(id);
 
     // DOM elements
-    const allowAll      = $("allowAll");
+    const blockSpecialKeys = $("blockSpecialKeys");
     const filterStatus  = $("filterStatus");
     const logContainer  = $("logContainer");
 
     // badge updater
     const updateBadge = () => {
-      const active = !allowAll.checked;
+      const active = blockSpecialKeys.checked;
       filterStatus.textContent = active ? "ブロック中" : "ブロック解除";
       filterStatus.classList.toggle("bg-danger", active);
       filterStatus.classList.toggle("bg-success", !active);
     };
     updateBadge();
-    allowAll.addEventListener("change", updateBadge);
+    blockSpecialKeys.addEventListener("change", updateBadge);
 
     // table cells list
     const cells = [
@@ -386,7 +387,7 @@
 
     // Allow when filter is active: any single printable char (incl. symbols), or modifier keys.
     const isAllowed = (e) => {
-      if (allowAll.checked) return true;
+      if (!blockSpecialKeys.checked) return true;
       if (typeof e.key === "string" && e.key.length === 1) return true; // letter/number/symbol
       if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return true;
       return false;
@@ -417,7 +418,7 @@
 
     // Special blocked keys (when filter active)
     const isSpecialBlocked = (e) => {
-      if (allowAll.checked) return false;
+      if (!blockSpecialKeys.checked) return false;
       const k = e.key || "";
       const c = e.code || "";
       // PrintScreen variants + KanaMode + Convert
@@ -468,6 +469,7 @@
         totals[kind] += 1;
         $(`${kind}Status`).textContent = "受信済み";
         $(`${kind}Status`).dataset.seen = "true";
+        delete $(`${kind}Status`).dataset.comparison;
         const direct = kind === "fn" ? sample.directFn : sample.directFnLock;
         const detail = direct ? `${sample.type} キー通知` : "ON状態通知";
         $(`${kind}Evidence`).textContent = `${detail} / ${totals[kind]}件`;
@@ -499,6 +501,13 @@
       const result = FnDiagnostics.compare(samples.normal, samples.fn);
       $("compareMessage").textContent = result.text;
       $("compareMessage").dataset.result = result.kind;
+      // A manually guided input comparison is separate from a direct Fn notification.
+      if (totals.fn === 0) {
+        const changed = result.kind === "changed";
+        $("fnStatus").textContent = changed ? "入力変化あり（比較）" : "直接通知待ち";
+        $("fnStatus").dataset.comparison = result.kind;
+        $("fnEvidence").textContent = changed ? "Fnなし／ありの比較で入力が変化（直接・状態通知 0件）" : "直接・状態通知 0件";
+      }
     };
     const sampleText = sample => sample?.timeout ? "10秒間、対象キーの通知なし"
       : sample ? `key=${JSON.stringify(sample.key)} / code=${JSON.stringify(sample.code)} / Fn=${FnDiagnostics.modifierRaw(sample.fn)} / FnLock=${FnDiagnostics.modifierRaw(sample.fnLock)} (${sample.type})` : "未記録";
@@ -513,6 +522,7 @@
         samples.fn = null;
         $("fnSample").textContent = "未記録";
       }
+      updateComparison();
       armed = kind;
       preCaptureKeys = new Set(pressedKeys);
       refreshCaptureButtons();
@@ -555,8 +565,9 @@
       samples.fn = null;
       for (const kind of ["fn", "fnLock"]) {
         totals[kind] = 0;
-        $(`${kind}Status`).textContent = "未検出";
+        $(`${kind}Status`).textContent = "直接通知待ち";
         delete $(`${kind}Status`).dataset.seen;
+        delete $(`${kind}Status`).dataset.comparison;
         $(`${kind}Evidence`).textContent = "直接・状態通知 0件";
       }
       $("normalSample").textContent = "未記録";
@@ -578,6 +589,7 @@
     window.addEventListener("pagehide", cancelOnFocusLoss);
     document.addEventListener("visibilitychange", () => { if (document.hidden) cancelOnFocusLoss(); });
     const isControlNavigation = evt => evt.target instanceof Element && (
+      evt.target === logContainer ||
       Boolean(evt.target.closest(".package-nav")) ||
       ["Tab", "Enter", " "].includes(evt.key) && Boolean(evt.target.closest("button, summary, input[type=checkbox]"))
     );
@@ -626,7 +638,7 @@
     $("downloadLog").addEventListener("click", () => {
       // normalize EOLs to CRLF for downloaded file
       const eol = "\r\n";
-      const fnSummary = `# mknkCheckTools v1.2.0 / Keyboard v20260915-fn1\n# Fn=${totals.fn}件 / FnLock=${totals.fnLock}件\n# Fn=false はON通知なし。未押下と未対応の区別は不可。\n# Fn比較 通常: ${sampleText(samples.normal)}\n# Fn比較 Fnあり（手動指定）: ${sampleText(samples.fn)}\n`;
+      const fnSummary = `# mknkCheckTools v1.2.4 / Keyboard v20261103-fn2\n# Fn=${totals.fn}件 / FnLock=${totals.fnLock}件\n# Fn=false はON通知なし。未押下と未対応の区別は不可。\n# Fn比較 通常: ${sampleText(samples.normal)}\n# Fn比較 Fnあり（手動指定）: ${sampleText(samples.fn)}\n`;
       const data = (fnSummary + (logContainer.value || "")).replace(/\r?\n/g, eol);
       const blob = new Blob(["\uFEFF", data], { type: "text/plain;charset=utf-8" });
       const url  = URL.createObjectURL(blob);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>mknk チェックツール v1.2.3</title>
+<title>mknk チェックツール v1.2.4</title>
 <style>
 :root{color-scheme:light;--ink:#182d3e;--muted:#60707d;--line:#d9e1e5;--blue:#155ec1;--green:#087e71}
 *{box-sizing:border-box}
@@ -30,7 +30,7 @@ h1{margin:0 0 8px;font-size:clamp(28px,4.5vw,38px);letter-spacing:.025em;line-he
 .audio-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}.audio-heading h2{font-size:23px}.audio-badge{padding:4px 10px;border-radius:6px;background:#f0effc;color:#5a4890;font-size:12px;font-weight:700}
 .audio-intro{margin:0 0 14px;font-size:13px;color:var(--muted)}audio{display:block;width:100%;margin:12px 0}
 .audio-controls{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 10px}.audio-controls button{padding:9px 13px;border:1px solid #c8c0dc;border-radius:8px;color:#4b3d75;background:#f6f4fc;font:inherit;font-size:13px;cursor:pointer}
-.audio-controls button:hover{background:#ebe7f7}.audio-controls button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.audio-controls button.secondary{border-color:var(--line);color:var(--muted);background:#fff}
+.audio-controls button:hover{background:#ebe7f7}.audio-controls button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.audio-controls button.secondary{border-color:#e6b8b5;color:#91453f;background:#fff1f0}.audio-controls button.secondary:hover{background:#fbe3e1}
 .audio-state{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:10px 0;font-size:13px}.audio-clock{font-variant-numeric:tabular-nums;color:var(--muted)}
 .audio-note{margin:8px 0 0;font-size:12px;color:var(--muted)}#audioStatus[data-error="true"]{color:#a52c28}.audio-download{font-size:13px;color:var(--blue)}
 .audio-sources{margin-top:14px;font-size:12px;color:var(--muted)}.audio-sources summary{cursor:pointer}.audio-sources a{color:var(--blue)}.audio-sources p{margin:8px 0 0}
@@ -49,13 +49,13 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
   <main>
     <div class="intro"><p class="eyebrow">PC CHECK TOOLS</p><h1>チェックツール</h1><p class="lead">液晶・キーボード・スピーカーを、ひとつのメニューから確認できます。</p></div>
     <div class="tools">
-      <a class="tool lcd" href="tools/mknk-lcd-tester.html" aria-labelledby="lcd-title lcd-launch">
+      <a class="tool lcd" href="tools/mknk-lcd-tester.html" target="_blank" rel="noopener" aria-labelledby="lcd-title lcd-launch">
         <div class="card-head"><span class="icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect x="4" y="6" width="28" height="20" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 31h10M18 26v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 10h6v12H8z" fill="currentColor" opacity=".18"/><path d="M15 10h6v12h-6z" fill="currentColor" opacity=".4"/><path d="M22 10h6v12h-6z" fill="currentColor" opacity=".75"/></svg></span><span class="number" aria-hidden="true">01 / LCD</span></div>
         <h2 id="lcd-title">液晶チェック</h2><p class="english">LCD TESTER</p><p class="description">単色やシマシマを画面いっぱいに表示して、液晶の見え方を確認します。</p>
         <ul class="features"><li>8つの表示モード</li><li>全画面表示</li><li>自動切替</li></ul>
         <span class="launch"><span id="lcd-launch">液晶チェックを開く</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </a>
-      <a class="tool keyboard" href="tools/keyboard_event_inspector_local.html" aria-labelledby="keyboard-title keyboard-launch">
+      <a class="tool keyboard" href="tools/keyboard_event_inspector_local.html" target="_blank" rel="noopener" aria-labelledby="keyboard-title keyboard-launch">
         <div class="card-head"><span class="icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect x="3" y="8" width="30" height="21" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 14h1m5 0h1m5 0h1m5 0h1M8 19h1m5 0h1m5 0h1m5 0h1M11 24h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="number" aria-hidden="true">02 / KEYBOARD</span></div>
         <h2 id="keyboard-title">キーボードチェック</h2><p class="english">KEYBOARD EVENT INSPECTOR</p><p class="description">入力文字、キーコード、Fnの通知を確認し、イベントログを保存できます。</p>
         <ul class="features"><li>入力テスト</li><li>Fn通知・比較</li><li>ログ保存</li></ul>
@@ -78,9 +78,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
       <p class="audio-note"><a class="audio-download" href="media/TEST_TONE_left_right_center_2x.wav" download="TEST_TONE_left_right_center_2x.wav">WAVを保存</a> · MP3から変換 / 48kHz / 16bit / ステレオ</p>
       <details class="audio-sources"><summary>音源について</summary><p>TEST_TONE_left_right_center_2x(1).mp3 を使用しています。MP3の音声データは変更せず、倍速処理済みの音源をそのままの速さで再生します。初期音量は100%です。</p><p>WAVは同じMP3を変換したものです。音源の内容・音質はMP3に由来します。</p></details>
     </section>
-    <aside class="guide" aria-label="使い方"><strong>使い方</strong><p>各ツールの「メニューへ戻る」で、この画面に戻れます。<br>液晶チェックは F キーで全画面、H キーで操作パネルの表示を切り替えられます。</p></aside>
+    <aside class="guide" aria-label="使い方"><strong>使い方</strong><p>液晶・キーボードチェックは新しいタブで開きます。各ツールの「メニューへ戻る」で、この画面に戻れます。<br>液晶チェックは F キーで全画面、H キーで操作パネルの表示を切り替えられます。</p></aside>
   </main>
-  <footer><span>インストール不要 · インターネット接続不要</span><span class="version">mknkCheckTools v1.2.3</span></footer>
+  <footer><span>インストール不要 · インターネット接続不要</span><span class="version">mknkCheckTools v1.2.4</span></footer>
 </div>
 <script>
 (() => {
