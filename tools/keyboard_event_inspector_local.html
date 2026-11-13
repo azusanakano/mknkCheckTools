@@ -260,7 +260,7 @@
           </div>
         </div>
         <div class="card-body p-0 d-flex flex-column">
-          <p id="logHelp" class="log-help text-muted">時刻は端末のローカル時刻です。修飾キーは押されているものだけを表示します。</p>
+          <p id="logHelp" class="log-help text-muted">記録時刻は端末のローカル時刻です。修飾キーは押されているものだけを表示します。</p>
           <textarea id="logContainer" class="form-control border-0" rows="17" wrap="soft" spellcheck="false" readonly aria-label="イベントログ" aria-describedby="logHelp" placeholder="キーを押すと、日時・操作・キーの詳細をここに表示します。"></textarea>
         </div>
       </div>
@@ -360,7 +360,9 @@
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
         `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`;
     };
-    const eventLabels = { keydown: "押下", keypress: "文字キー", keyup: "解放" };
+    const quoteLogValue = (value) => JSON.stringify(String(value ?? ""))
+      .replace(/[\u0085\u2028\u2029]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`);
+    const eventLabels = { keydown: "押下", keypress: "キー入力通知", keyup: "解放" };
     const locationLabels = ["標準", "左", "右", "テンキー"];
     const updateRow = (phase, evt) => {
       $(`${phase}Key`).textContent   = evt.key ?? "";
@@ -374,14 +376,14 @@
     const showChar   = (evt) => $("charCell").textContent   = (evt.key && evt.key.length === 1) ? evt.key : "—";
     const log = (evt) => {
       const key = String(evt.key ?? "");
-      const keyLabel = key === " " ? 'スペース (" ")' : key === "" ? '未取得 ("")' : JSON.stringify(key);
+      const keyLabel = key === " " ? 'スペース (" ")' : key === "" ? '未取得 ("")' : quoteLogValue(key);
       const location = evt.location ?? 0;
       const modifiers = [["Shift", evt.shiftKey], ["Ctrl", evt.ctrlKey], ["Alt", evt.altKey], ["Meta", evt.metaKey]]
         .filter(([, pressed]) => pressed).map(([name]) => name).join(" + ") || "なし";
       const trusted = evt.isTrusted === true;
       prependLog([
         `#${++count} [${formatLogTime(new Date())}] ${eventLabels[evt.type] ?? evt.type} (${evt.type})`,
-        `  キー: ${keyLabel} | 物理キー (code): ${JSON.stringify(String(evt.code ?? ""))} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
+        `  キー: ${keyLabel} | 物理キー (code): ${quoteLogValue(evt.code)} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
         `  修飾キー: ${modifiers} | 長押し反復: ${evt.repeat ? "あり" : "なし"}`,
         `  発生元: ${trusted ? "ブラウザー" : "スクリプト"} (isTrusted=${trusted}) | keyCode=${evt.keyCode ?? 0} | which=${evt.which ?? 0}`
       ].join("\r\n"));
@@ -427,7 +429,8 @@
     $("downloadLog").addEventListener("click", () => {
       // normalize EOLs to CRLF for downloaded file
       const header = "# mknkCheckTools v1.2.4 / Keyboard v20261103\n" +
-        "# キーボードイベントログ（最新が上 / 時刻は端末のローカル時刻）\n";
+        "# Log format: 2\n" +
+        "# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\n";
       const data = `${header}\n${logContainer.value}`.replace(/\r?\n/g, "\r\n");
       const blob = new Blob(["\uFEFF", data], { type: "text/plain;charset=utf-8" });
       const url  = URL.createObjectURL(blob);

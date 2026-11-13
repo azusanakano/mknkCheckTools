@@ -6,7 +6,7 @@ const { test } = require('node:test');
 
 // Run the shipped inline scripts. Only browser DOM/event delivery is substituted;
 // key interpretation, filtering, logging, and status updates use production code.
-function loadInspector() {
+function loadInspector(initialTime = new Date(2026, 10, 13, 8, 5, 9, 7).getTime()) {
   const html = fs.readFileSync(path.join(__dirname, '../tools/keyboard_event_inspector_local.html'), 'utf8');
   class Element {
     constructor(tagName, attributes = '', text = '') {
@@ -21,6 +21,11 @@ function loadInspector() {
         contains: name => classes.has(name),
         toggle(name, enabled) { if (enabled) classes.add(name); else classes.delete(name); }
       };
+    }
+    get value() { return this._value; }
+    set value(value) {
+      const text = String(value);
+      this._value = this.nodeName === 'TEXTAREA' ? text.replace(/\r\n?/g, '\n') : text;
     }
     addEventListener(type, callback) { (this.listeners[type] ||= []).push(callback); }
     emit(type, event = {}) { for (const callback of this.listeners[type] || []) callback(event); }
@@ -40,7 +45,7 @@ function loadInspector() {
   };
   const window = new Element('window');
   let downloadedLog;
-  const now = new Date(2026, 10, 13, 8, 5, 9, 7).getTime();
+  let now = initialTime;
   class FixedDate extends Date {
     constructor(...args) { super(...(args.length ? args : [now])); }
     static now() { return now; }
@@ -74,7 +79,8 @@ function loadInspector() {
       return event;
     },
     click: id => get(id).click(),
-    downloadedLog: () => downloadedLog
+    downloadedLog: () => downloadedLog,
+    advanceTime(milliseconds) { now += milliseconds; }
   };
 }
 
@@ -122,7 +128,7 @@ test('copy shortcuts in the log leave its contents unchanged through every keybo
     }
   }
   page.key('a', 'KeyA');
-  assert.match(log.value, /^#1 \[2026-11-13 08:05:09\.007\] 押下 \(keydown\)\r\n  キー: "a"/);
+  assert.match(log.value, /^#1 \[2026-11-13 08:05:09\.007\] 押下 \(keydown\)\n  キー: "a"/);
 });
 
 test('log navigation is available while special-key blocking is ON', () => {
@@ -143,9 +149,9 @@ test('function key logs explain the action and retain diagnostic properties', ()
   assert.equal(page.get('downKey').textContent, 'F2');
   assert.equal(page.get('downCode').textContent, 'F2');
   assert.equal(log.value,
-    '#1 [2026-11-13 08:05:09.007] 押下 (keydown)\r\n' +
-    '  キー: "F2" | 物理キー (code): "F2" | 位置: 標準 (0)\r\n' +
-    '  修飾キー: Shift | 長押し反復: あり\r\n' +
+    '#1 [2026-11-13 08:05:09.007] 押下 (keydown)\n' +
+    '  キー: "F2" | 物理キー (code): "F2" | 位置: 標準 (0)\n' +
+    '  修飾キー: Shift | 長押し反復: あり\n' +
     '  発生元: ブラウザー (isTrusted=true) | keyCode=113 | which=113');
 });
 
@@ -155,10 +161,10 @@ test('event blocks are newest first, include every phase, and restart numbering 
   page.key('a', 'KeyA');
   page.key('a', 'KeyA', { type: 'keypress' });
   page.key('a', 'KeyA', { type: 'keyup' });
-  const blocks = log.value.split('\r\n\r\n');
+  const blocks = log.value.split('\n\n');
   assert.equal(blocks.length, 3);
   assert.match(blocks[0], /^#3 \[2026-11-13 08:05:09\.007\] 解放 \(keyup\)/);
-  assert.match(blocks[1], /^#2 \[2026-11-13 08:05:09\.007\] 文字キー \(keypress\)/);
+  assert.match(blocks[1], /^#2 \[2026-11-13 08:05:09\.007\] キー入力通知 \(keypress\)/);
   assert.match(blocks[2], /^#1 \[2026-11-13 08:05:09\.007\] 押下 \(keydown\)/);
   assert.match(blocks[2], /修飾キー: なし \| 長押し反復: なし/);
   page.click('clearLog');
@@ -166,6 +172,27 @@ test('event blocks are newest first, include every phase, and restart numbering 
   page.key('PrintScreen', 'PrintScreen', { type: 'keyup' });
   assert.match(log.value, /^#1 \[2026-11-13 08:05:09\.007\] 解放 \(keyup\)/);
   assert.match(log.value, /キー: "PrintScreen"/);
+});
+
+test('Ctrl+Enter keypress is labelled as an input notification and retains the Enter key', () => {
+  const page = loadInspector();
+  const event = page.key('Enter', 'Enter', { type: 'keypress', ctrlKey: true, keyCode: 13, which: 13 });
+  const log = page.get('logContainer').value;
+  assert.equal(event.defaultPrevented, false);
+  assert.match(log, /^#1 \[2026-11-13 08:05:09\.007\] キー入力通知 \(keypress\)\n/);
+  assert.match(log, /キー: "Enter" \| 物理キー \(code\): "Enter"/);
+  assert.match(log, /修飾キー: Ctrl \| 長押し反復: なし/);
+});
+
+test('each event records the current local time across midnight', () => {
+  const page = loadInspector(new Date(2026, 11, 31, 23, 59, 59, 999).getTime());
+  page.key('a', 'KeyA');
+  page.advanceTime(2);
+  page.key('a', 'KeyA', { type: 'keyup' });
+  const blocks = page.get('logContainer').value.split('\n\n');
+  assert.equal(blocks.length, 2);
+  assert.match(blocks[0], /^#2 \[2027-01-01 00:00:00\.001\] 解放 \(keyup\)/);
+  assert.match(blocks[1], /^#1 \[2026-12-31 23:59:59\.999\] 押下 \(keydown\)/);
 });
 
 test('logs distinguish key locations, active modifiers, and synthetic events', () => {
@@ -192,9 +219,38 @@ test('space and missing keys are readable and control characters cannot split ev
   assert.match(log.value, /キー: 未取得 \(""\) \| 物理キー \(code\): "" \| 位置: 標準 \(0\)/);
   page.click('clearLog');
   page.key('"\r\n\t\\', 'Key"\n\\', { isTrusted: false });
-  assert.equal(log.value.split('\r\n').length, 4);
+  assert.equal(log.value.split('\n').length, 4);
   assert.ok(log.value.includes('キー: "\\\"\\r\\n\\t\\\\"'));
   assert.ok(log.value.includes('物理キー (code): "Key\\\"\\n\\\\"'));
+});
+
+test('Unicode line separators stay reversible in four-line event blocks and downloaded logs', async () => {
+  const page = loadInspector();
+  const key = 'A\u0085B\u2028C\u2029D';
+  const code = 'Key\u2029X\u2028Y\u0085Z';
+  page.key(key, code, { isTrusted: false });
+  const displayed = page.get('logContainer').value;
+  assert.equal(displayed.split('\n').length, 4);
+  assert.doesNotMatch(displayed, /\r|[\u0085\u2028\u2029]/);
+
+  page.click('downloadLog');
+  const bytes = new Uint8Array(await page.downloadedLog().arrayBuffer());
+  assert.deepEqual([...bytes.slice(0, 3)], [0xef, 0xbb, 0xbf]);
+  const downloaded = new TextDecoder().decode(bytes);
+  assert.doesNotMatch(downloaded, /(?<!\r)\n|\r(?!\n)|[\u0085\u2028\u2029]/);
+  assert.ok(downloaded.endsWith(displayed.replace(/\n/g, '\r\n')));
+
+  for (const text of [displayed, downloaded]) {
+    const fields = /^  キー: ("(?:\\.|[^"\\])*") \| 物理キー \(code\): ("(?:\\.|[^"\\])*") \| 位置:/m.exec(text);
+    assert.ok(fields, 'Both fields remain complete JSON strings on one line');
+    assert.equal(JSON.parse(fields[1]), key);
+    assert.equal(JSON.parse(fields[2]), code);
+    for (const field of fields.slice(1)) {
+      for (const escape of ['\\u0085', '\\u2028', '\\u2029']) {
+        assert.ok(field.includes(escape), `Expected reversible escape ${escape}`);
+      }
+    }
+  }
 });
 
 test('download preserves readable event blocks with a version header, BOM and CRLF', async () => {
@@ -202,15 +258,15 @@ test('download preserves readable event blocks with a version header, BOM and CR
   const log = page.get('logContainer');
   page.key(' ', 'Space');
   page.key(' ', 'Space', { type: 'keyup' });
-  const expectedLog = log.value;
-  // Browsers normalize textarea values to LF; the download restores CRLF.
-  log.value = log.value.replace(/\r\n/g, '\n');
+  assert.doesNotMatch(log.value, /\r/);
+  const expectedLog = log.value.replace(/\n/g, '\r\n');
   page.click('downloadLog');
   const bytes = new Uint8Array(await page.downloadedLog().arrayBuffer());
   assert.deepEqual([...bytes.slice(0, 3)], [0xef, 0xbb, 0xbf]);
   const text = new TextDecoder().decode(bytes);
   assert.match(text, /^# mknkCheckTools v\S+ \/ Keyboard v\S+\r\n/);
-  assert.ok(text.includes('# キーボードイベントログ（最新が上 / 時刻は端末のローカル時刻）\r\n\r\n'));
+  assert.match(text, /^# Log format: 2\r$/m);
+  assert.ok(text.includes('# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\r\n\r\n'));
   assert.ok(text.endsWith(expectedLog));
-  assert.doesNotMatch(text, /(?<!\r)\n/);
+  assert.doesNotMatch(text, /(?<!\r)\n|\r(?!\n)/);
 });
