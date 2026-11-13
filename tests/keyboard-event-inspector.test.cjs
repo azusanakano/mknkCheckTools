@@ -308,6 +308,50 @@ test('function key logs explain the action and retain diagnostic properties', ()
     '  発生元: ブラウザー (isTrusted=true) | keyCode=113 | which=113');
 });
 
+test('IME Process displays the physical key while preserving raw diagnostics and download text', async () => {
+  const page = loadInspector();
+  for (const [type, phase] of [['keydown', 'down'], ['keypress', 'press'], ['keyup', 'up']]) {
+    const event = page.key('Process', 'KeyA', { type, keyCode: 229 });
+    assert.equal(event.key, 'Process');
+    assert.equal(page.get(`${phase}Key`).textContent, 'Aキー');
+    assert.equal(page.get(`${phase}Key`).title, 'IME入力処理: key=Process / code=KeyA');
+    assert.equal(page.get(`${phase}Code`).textContent, 'KeyA');
+    assert.equal(page.get(`${phase}Key`).classList.contains('key-highlight'), true);
+  }
+  const log = page.get('logContainer').textContent;
+  assert.match(log, /キー: "Aキー"（IME入力処理） \| 物理キー \(code\): "KeyA"/);
+  assert.match(log, /keyCode=229 \| which=0 \| key="Process"/);
+  page.click('downloadLog');
+  const downloaded = await page.downloadedLog().text();
+  assert.ok(downloaded.endsWith(log.replace(/\n/g, '\r\n')));
+  page.key('b', 'KeyB');
+  assert.equal(page.get('downKey').textContent, 'b');
+  for (const id of ['downKey', 'pressKey', 'upKey']) assert.equal(page.get(id).title, '');
+});
+
+test('IME physical-key labels distinguish digits and keypad without guessing text or missing keys', () => {
+  const page = loadInspector();
+  for (const [code, label] of [
+    ['Digit1', '1キー'], ['Numpad1', 'テンキー1'], ['NumpadEnter', 'テンキーEnter'],
+    ['Space', 'スペース'], ['Convert', '変換'], ['IntlYen', 'IntlYenキー'],
+    ['', 'IME入力処理（キー不明）'], [undefined, 'IME入力処理（キー不明）'],
+    ['Unidentified', 'IME入力処理（キー不明）']
+  ]) {
+    page.click('clearLog');
+    page.key('Process', '', { code, shiftKey: true });
+    assert.equal(page.get('downKey').textContent, label);
+    assert.equal(page.get('charCell').textContent, '—');
+    assert.match(page.get('logContainer').textContent, /key="Process"/);
+  }
+  page.click('clearLog');
+  page.key('Process', '<img>\n\u2028');
+  const log = page.get('logContainer').textContent;
+  assert.equal(log.split('\n').length, 4);
+  assert.doesNotMatch(log, /\u2028/);
+  assert.ok(log.includes('"<img>\\n\\u2028キー"'));
+  assert.equal(page.get('logContainer').firstChild.children[0].children.length, 0);
+});
+
 test('event blocks are newest first, include every phase, and restart numbering after clear', () => {
   const page = loadInspector();
   const log = page.get('logContainer');
@@ -418,7 +462,7 @@ test('download preserves readable event blocks with a version header, BOM and CR
   assert.deepEqual([...bytes.slice(0, 3)], [0xef, 0xbb, 0xbf]);
   const text = new TextDecoder().decode(bytes);
   assert.match(text, /^# mknkCheckTools v\S+ \/ Keyboard v\S+\r\n/);
-  assert.match(text, /^# Log format: 2\r$/m);
+  assert.match(text, /^# Log format: 3\r$/m);
   assert.ok(text.includes('# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\r\n\r\n'));
   assert.ok(text.endsWith(expectedLog));
   assert.doesNotMatch(text, /(?<!\r)\n|\r(?!\n)/);

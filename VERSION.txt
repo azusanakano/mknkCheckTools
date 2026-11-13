@@ -1,14 +1,15 @@
 ﻿Package: mknkCheckTools
 Display name: mknk チェックツール
 Brand: ネコシステム社
-Version: 1.2.5
+Version: 1.2.6
 Release date: 2026-11-13
 LCD source: v20260828-local-stripes
 Keyboard source: v20260821-local1
-Keyboard edition: v20261113 (2026-11-13)
+Keyboard edition: v20261113-r2 (2026-11-13)
+Keyboard log format: 3
 Type: Offline HTML package
 Entry point: index.html
 Audio edition: TEST_TONE_left_right_center_2x
 Audio: MP3 48000 Hz 320 kbps stereo; PCM WAV 48000 Hz 16-bit stereo decoded from MP3 / approx. 18 seconds
 Audio source: User-supplied TEST_TONE_left_right_center_2x(1).mp3
-Change: Use Meiryo UI throughout; add readable timestamped keyboard logs; highlight only key values in red, bold, and +2px for 500ms with stable line heights; preserve log selection, copy, and plain-text download; allow keyboard navigation in the scrollable properties table
+Change: Show physical key names for IME Process events using code; preserve original Process in tooltips and downloaded diagnostic logs; clearly mark unavailable physical keys and distinguish key positions from composed text; mark the updated log semantics as format 3

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>キーボードチェック | mknkCheckTools v1.2.5</title>
+  <title>キーボードチェック | mknkCheckTools v1.2.6</title>
   <style>
     :root {
       color-scheme: light;
@@ -213,10 +213,10 @@
   </style>
 </head>
 <body class="container py-4">
-  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.5</span></nav>
+  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.6</span></nav>
   <header class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">キーボードチェック</h1>
-    <span class="text-muted">v20261113</span>
+    <span class="text-muted">v20261113-r2</span>
   </header>
 
   <div class="mb-3">
@@ -270,7 +270,7 @@
           </div>
         </div>
         <div class="card-body p-0 d-flex flex-column">
-          <p id="logHelp" class="log-help text-muted">記録時刻は端末のローカル時刻です。修飾キーは押されているものだけを表示します。</p>
+          <p id="logHelp" class="log-help text-muted">記録時刻は端末のローカル時刻です。修飾キーは押されているものだけを表示します。IME入力処理の通知では、物理キーの情報からキー名を表示します（確定した入力文字とは異なります）。</p>
           <div id="logContainer" class="form-control border-0" role="textbox" tabindex="0" aria-readonly="true" aria-multiline="true" aria-label="イベントログ" aria-describedby="logHelp" data-placeholder="キーを押すと、日時・操作・キーの詳細をここに表示します。"></div>
         </div>
       </div>
@@ -319,6 +319,7 @@
       const cell = $(id);
       clearKeyHighlight(cell);
       cell.textContent = "—";
+      cell.title = "";
     });
 
     // Allow when filter is active: any single printable char (incl. symbols), or modifier keys.
@@ -396,9 +397,26 @@
       .replace(/[\u0085\u2028\u2029]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`);
     const eventLabels = { keydown: "押下", keypress: "キー入力通知", keyup: "解放" };
     const locationLabels = ["標準", "左", "右", "テンキー"];
+    const physicalKeyNames = new Map(Object.entries({
+      Space: "スペース", Escape: "Esc", Convert: "変換", NonConvert: "無変換", KanaMode: "かな",
+      NumpadEnter: "テンキーEnter", NumpadAdd: "テンキー+", NumpadSubtract: "テンキー−",
+      NumpadMultiply: "テンキー*", NumpadDivide: "テンキー/",
+      ShiftLeft: "左Shift", ShiftRight: "右Shift", ControlLeft: "左Ctrl", ControlRight: "右Ctrl",
+      AltLeft: "左Alt", AltRight: "右Alt", MetaLeft: "左Meta", MetaRight: "右Meta"
+    }));
+    const physicalKeyLabel = (value) => {
+      const code = String(value ?? "");
+      if (!code || code === "Unidentified") return "IME入力処理（キー不明）";
+      if (/^Key[A-Z]$/.test(code)) return `${code.slice(3)}キー`;
+      if (/^Digit[0-9]$/.test(code)) return `${code.slice(5)}キー`;
+      if (/^Numpad[0-9]$/.test(code)) return `テンキー${code.slice(6)}`;
+      return physicalKeyNames.get(code) ?? `${code}キー`;
+    };
     const updateRow = (phase, evt) => {
-      $(`${phase}Key`).textContent   = evt.key ?? "";
-      highlightKey($(`${phase}Key`));
+      const keyCell = $(`${phase}Key`);
+      keyCell.textContent = evt.key === "Process" ? physicalKeyLabel(evt.code) : evt.key ?? "";
+      keyCell.title = evt.key === "Process" ? `IME入力処理: key=Process / code=${evt.code ?? ""}` : "";
+      highlightKey(keyCell);
       $(`${phase}Code`).textContent  = evt.code ?? "";
       $(`${phase}Shift`).textContent = evt.shiftKey;
       $(`${phase}Ctrl`).textContent  = evt.ctrlKey;
@@ -409,7 +427,9 @@
     const showChar   = (evt) => $("charCell").textContent   = (evt.key && evt.key.length === 1) ? evt.key : "—";
     const log = (evt) => {
       const key = String(evt.key ?? "");
-      const keyLabel = key === " " ? 'スペース (" ")' : key === "" ? '未取得 ("")' : quoteLogValue(key);
+      const isProcess = key === "Process";
+      const keyLabel = isProcess ? quoteLogValue(physicalKeyLabel(evt.code)) :
+        key === " " ? 'スペース (" ")' : key === "" ? '未取得 ("")' : quoteLogValue(key);
       const location = evt.location ?? 0;
       const modifiers = [["Shift", evt.shiftKey], ["Ctrl", evt.ctrlKey], ["Alt", evt.altKey], ["Meta", evt.metaKey]]
         .filter(([, pressed]) => pressed).map(([name]) => name).join(" + ") || "なし";
@@ -418,9 +438,10 @@
         `#${++count} [${formatLogTime(new Date())}] ${eventLabels[evt.type] ?? evt.type} (${evt.type})`,
         keyLabel,
         [
-          ` | 物理キー (code): ${quoteLogValue(evt.code)} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
+          `${isProcess ? "（IME入力処理）" : ""} | 物理キー (code): ${quoteLogValue(evt.code)} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
           `  修飾キー: ${modifiers} | 長押し反復: ${evt.repeat ? "あり" : "なし"}`,
-          `  発生元: ${trusted ? "ブラウザー" : "スクリプト"} (isTrusted=${trusted}) | keyCode=${evt.keyCode ?? 0} | which=${evt.which ?? 0}`
+          `  発生元: ${trusted ? "ブラウザー" : "スクリプト"} (isTrusted=${trusted}) | keyCode=${evt.keyCode ?? 0} | which=${evt.which ?? 0}` +
+            (isProcess ? ` | key=${quoteLogValue(key)}` : "")
         ].join("\n")
       );
     };
@@ -472,8 +493,8 @@
     $("clearLog").addEventListener("click", () => { logContainer.textContent = ""; count = 0; });
     $("downloadLog").addEventListener("click", () => {
       // normalize EOLs to CRLF for downloaded file
-      const header = "# mknkCheckTools v1.2.5 / Keyboard v20261113\n" +
-        "# Log format: 2\n" +
+      const header = "# mknkCheckTools v1.2.6 / Keyboard v20261113-r2\n" +
+        "# Log format: 3\n" +
         "# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\n";
       const data = `${header}\n${logContainer.textContent}`.replace(/\r?\n/g, "\r\n");
       const blob = new Blob(["\uFEFF", data], { type: "text/plain;charset=utf-8" });
