@@ -20,7 +20,7 @@
       margin: 0;
       color: #212529;
       background: #fff;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-family: "Meiryo UI", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
       font-size: 1rem;
       line-height: 1.5;
     }
@@ -179,14 +179,21 @@
     #logContainer {
       display: block;
       flex: 1 1 auto;
+      height: calc(17 * 1.4rem + 0.75rem);
       min-height: 340px;
-      font-family: ui-monospace, "Cascadia Mono", "Yu Gothic", monospace;
+      font-family: inherit;
       font-size: 0.875rem;
       line-height: 1.6;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
+      overflow: auto;
       border-radius: 0 0 0.375rem 0.375rem;
     }
+    #logContainer:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+    }
+    .key-highlight { color: var(--danger); font-weight: 700; font-size: calc(1em + 2px); }
     @media (max-width: 991.98px) {
       .row { grid-template-columns: minmax(0, 1fr); }
     }
@@ -261,7 +268,7 @@
         </div>
         <div class="card-body p-0 d-flex flex-column">
           <p id="logHelp" class="log-help text-muted">記録時刻は端末のローカル時刻です。修飾キーは押されているものだけを表示します。</p>
-          <textarea id="logContainer" class="form-control border-0" rows="17" wrap="soft" spellcheck="false" readonly aria-label="イベントログ" aria-describedby="logHelp" placeholder="キーを押すと、日時・操作・キーの詳細をここに表示します。"></textarea>
+          <div id="logContainer" class="form-control border-0" role="textbox" tabindex="0" aria-readonly="true" aria-multiline="true" aria-label="イベントログ" aria-describedby="logHelp" data-placeholder="キーを押すと、日時・操作・キーの詳細をここに表示します。"></div>
         </div>
       </div>
     </div>
@@ -294,7 +301,22 @@
       "downShift","pressShift","upShift","downCtrl","pressCtrl","upCtrl","downAlt","pressAlt","upAlt",
       "downMeta","pressMeta","upMeta"
     ];
-    const clearCells = () => cells.forEach(id => $(id).textContent = "—");
+    const keyHighlightTimers = new WeakMap();
+    const clearKeyHighlight = (element) => {
+      clearTimeout(keyHighlightTimers.get(element));
+      keyHighlightTimers.delete(element);
+      element.classList.toggle("key-highlight", false);
+    };
+    const highlightKey = (element) => {
+      clearKeyHighlight(element);
+      element.classList.toggle("key-highlight", true);
+      keyHighlightTimers.set(element, setTimeout(() => clearKeyHighlight(element), 500));
+    };
+    const clearCells = () => cells.forEach(id => {
+      const cell = $(id);
+      clearKeyHighlight(cell);
+      cell.textContent = "—";
+    });
 
     // Allow when filter is active: any single printable char (incl. symbols), or modifier keys.
     const isAllowed = (e) => {
@@ -351,9 +373,16 @@
 
     // log helpers
     let count = 0;
-    const prependLog = (text) => {
-      const EOL = "\r\n"; // Windows-friendly newline
-      logContainer.value = [text, logContainer.value].filter(Boolean).join(EOL + EOL);
+    const prependLog = (heading, keyLabel, details) => {
+      const entry = document.createElement("span");
+      const key = document.createElement("span");
+      key.classList.toggle("log-key", true);
+      key.textContent = keyLabel;
+      // Text nodes keep key names literal and copy/download formatting unchanged.
+      entry.append(`${heading}\n  キー: `, key, details);
+      if (logContainer.firstChild) logContainer.prepend("\n\n");
+      logContainer.prepend(entry);
+      highlightKey(key);
     };
     const formatLogTime = (date) => {
       const pad = (value, width = 2) => String(value).padStart(width, "0");
@@ -366,6 +395,7 @@
     const locationLabels = ["標準", "左", "右", "テンキー"];
     const updateRow = (phase, evt) => {
       $(`${phase}Key`).textContent   = evt.key ?? "";
+      highlightKey($(`${phase}Key`));
       $(`${phase}Code`).textContent  = evt.code ?? "";
       $(`${phase}Shift`).textContent = evt.shiftKey;
       $(`${phase}Ctrl`).textContent  = evt.ctrlKey;
@@ -381,16 +411,19 @@
       const modifiers = [["Shift", evt.shiftKey], ["Ctrl", evt.ctrlKey], ["Alt", evt.altKey], ["Meta", evt.metaKey]]
         .filter(([, pressed]) => pressed).map(([name]) => name).join(" + ") || "なし";
       const trusted = evt.isTrusted === true;
-      prependLog([
+      prependLog(
         `#${++count} [${formatLogTime(new Date())}] ${eventLabels[evt.type] ?? evt.type} (${evt.type})`,
-        `  キー: ${keyLabel} | 物理キー (code): ${quoteLogValue(evt.code)} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
-        `  修飾キー: ${modifiers} | 長押し反復: ${evt.repeat ? "あり" : "なし"}`,
-        `  発生元: ${trusted ? "ブラウザー" : "スクリプト"} (isTrusted=${trusted}) | keyCode=${evt.keyCode ?? 0} | which=${evt.which ?? 0}`
-      ].join("\r\n"));
+        keyLabel,
+        [
+          ` | 物理キー (code): ${quoteLogValue(evt.code)} | 位置: ${locationLabels[location] ?? "不明"} (${location})`,
+          `  修飾キー: ${modifiers} | 長押し反復: ${evt.repeat ? "あり" : "なし"}`,
+          `  発生元: ${trusted ? "ブラウザー" : "スクリプト"} (isTrusted=${trusted}) | keyCode=${evt.keyCode ?? 0} | which=${evt.which ?? 0}`
+        ].join("\n")
+      );
     };
 
     const isControlNavigation = evt => evt.target instanceof Element && (
-      evt.target === logContainer ||
+      logContainer.contains(evt.target) ||
       Boolean(evt.target.closest(".package-nav")) ||
       ["Tab", "Enter", " "].includes(evt.key) && Boolean(evt.target.closest("button, input[type=checkbox]"))
     );
@@ -398,7 +431,14 @@
     // Capture at window level so PrintScreen is handled before page listeners.
     const captureOptions = { capture: true, passive: false };
     window.addEventListener("keydown", (evt) => {
-      if (isControlNavigation(evt)) return;
+      if (isControlNavigation(evt)) {
+        if (logContainer.contains(evt.target) && (evt.ctrlKey || evt.metaKey) &&
+            !evt.altKey && evt.key?.toLowerCase() === "a") {
+          evt.preventDefault();
+          window.getSelection()?.selectAllChildren(logContainer);
+        }
+        return;
+      }
       clearCells();
       updateRow("down", evt);
       showTarget(evt);
@@ -425,13 +465,13 @@
     }, captureOptions);
 
     // buttons
-    $("clearLog").addEventListener("click", () => { logContainer.value = ""; count = 0; });
+    $("clearLog").addEventListener("click", () => { logContainer.textContent = ""; count = 0; });
     $("downloadLog").addEventListener("click", () => {
       // normalize EOLs to CRLF for downloaded file
       const header = "# mknkCheckTools v1.2.4 / Keyboard v20261103\n" +
         "# Log format: 2\n" +
         "# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\n";
-      const data = `${header}\n${logContainer.value}`.replace(/\r?\n/g, "\r\n");
+      const data = `${header}\n${logContainer.textContent}`.replace(/\r?\n/g, "\r\n");
       const blob = new Blob(["\uFEFF", data], { type: "text/plain;charset=utf-8" });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
