@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>キーボードチェック | mknkCheckTools v1.2.4</title>
+  <title>キーボードチェック | mknkCheckTools v1.2.5</title>
   <style>
     :root {
       color-scheme: light;
@@ -194,6 +194,9 @@
       color: var(--muted);
     }
     .key-highlight { color: var(--danger); font-weight: 700; font-size: calc(1em + 2px); }
+    /* Keep enlarged key values within the existing table and log line heights. */
+    .table .key-highlight { line-height: 1.5rem; }
+    .log-key { line-height: 1; }
     @media (max-width: 991.98px) {
       .row { grid-template-columns: minmax(0, 1fr); }
     }
@@ -210,10 +213,10 @@
   </style>
 </head>
 <body class="container py-4">
-  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.4</span></nav>
+  <nav class="package-nav" aria-label="ツールメニュー"><a href="../index.html">← メニューへ戻る</a><span>mknkCheckTools v1.2.5</span></nav>
   <header class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">キーボードチェック</h1>
-    <span class="text-muted">v20261103</span>
+    <span class="text-muted">v20261113</span>
   </header>
 
   <div class="mb-3">
@@ -424,6 +427,7 @@
 
     const isControlNavigation = evt => evt.target instanceof Element && (
       logContainer.contains(evt.target) ||
+      Boolean(evt.target.closest(".table-responsive")) ||
       Boolean(evt.target.closest(".package-nav")) ||
       ["Tab", "Enter", " "].includes(evt.key) && Boolean(evt.target.closest("button, input[type=checkbox]"))
     );
@@ -468,7 +472,7 @@
     $("clearLog").addEventListener("click", () => { logContainer.textContent = ""; count = 0; });
     $("downloadLog").addEventListener("click", () => {
       // normalize EOLs to CRLF for downloaded file
-      const header = "# mknkCheckTools v1.2.4 / Keyboard v20261103\n" +
+      const header = "# mknkCheckTools v1.2.5 / Keyboard v20261113\n" +
         "# Log format: 2\n" +
         "# キーボードイベントログ（最新が上 / 記録時刻は端末のローカル時刻）\n";
       const data = `${header}\n${logContainer.textContent}`.replace(/\r?\n/g, "\r\n");

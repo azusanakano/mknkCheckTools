@@ -51,7 +51,9 @@ function loadInspector(initialTime = new Date(2026, 10, 13, 8, 5, 9, 7).getTime(
     addEventListener(type, callback) { (this.listeners[type] ||= []).push(callback); }
     emit(type, event = {}) { for (const callback of this.listeners[type] || []) callback(event); }
     closest(selector) {
-      if (selector === '.package-nav') return null;
+      if (selector.startsWith('.')) {
+        return this.classList.contains(selector.slice(1)) ? this : this.parentElement?.closest(selector) || null;
+      }
       return this.nodeName === 'BUTTON' || this.type === 'checkbox' ? this : null;
     }
     click() { this.emit('click'); }
@@ -94,6 +96,7 @@ function loadInspector(initialTime = new Date(2026, 10, 13, 8, 5, 9, 7).getTime(
   const get = id => elements.get(id);
   return {
     get,
+    createElement: (tagName, attributes = '') => new Element(tagName, attributes),
     control: [...elements.values()].find(element => element.type === 'checkbox'),
     key(key, code = key, options = {}) {
       const event = {
@@ -271,6 +274,25 @@ test('log navigation is available while special-key blocking is ON', () => {
   }
   assert.equal(log.textContent, 'Existing event log');
   assert.equal(page.key('Tab').defaultPrevented, true);
+});
+
+test('the scrollable properties table permits keyboard navigation without recording it', () => {
+  const page = loadInspector();
+  const tableScroller = page.createElement('div', 'class="table-responsive"');
+  const cell = page.createElement('td');
+  tableScroller.append(cell);
+  page.key('a', 'KeyA');
+  const previousLog = page.get('logContainer').textContent;
+  for (const target of [tableScroller, cell]) {
+    for (const type of ['keydown', 'keypress', 'keyup']) {
+      for (const key of ['Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End']) {
+        assert.equal(page.key(key, key, { type, target }).defaultPrevented, false, `${type}: ${key}`);
+        assert.equal(page.get('logContainer').textContent, previousLog);
+        assert.equal(page.get('downKey').textContent, 'a');
+      }
+    }
+  }
+  assert.equal(page.key('Tab').defaultPrevented, true, 'Input testing keeps the special-key filter');
 });
 
 test('function key logs explain the action and retain diagnostic properties', () => {

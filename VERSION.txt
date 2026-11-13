@@ -1,14 +1,14 @@
 ﻿Package: mknkCheckTools
 Display name: mknk チェックツール
 Brand: ネコシステム社
-Version: 1.2.4
-Release date: 2026-11-03
+Version: 1.2.5
+Release date: 2026-11-13
 LCD source: v20260828-local-stripes
 Keyboard source: v20260821-local1
-Keyboard edition: v20261103 (2026-11-03)
+Keyboard edition: v20261113 (2026-11-13)
 Type: Offline HTML package
 Entry point: index.html
 Audio edition: TEST_TONE_left_right_center_2x
 Audio: MP3 48000 Hz 320 kbps stereo; PCM WAV 48000 Hz 16-bit stereo decoded from MP3 / approx. 18 seconds
 Audio source: User-supplied TEST_TONE_left_right_center_2x(1).mp3
-Change: Align special-key blocking with switch ON; preserve log selection/copy; allow native Enter/Space activation of LCD buttons
+Change: Use Meiryo UI throughout; add readable timestamped keyboard logs; highlight only key values in red, bold, and +2px for 500ms with stable line heights; preserve log selection, copy, and plain-text download; allow keyboard navigation in the scrollable properties table
